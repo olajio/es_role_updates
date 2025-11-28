@@ -1,0 +1,27 @@
+# Example Roles to Update
+# This file shows how to specify roles for selective updates
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+
+# Development roles
+ELK-Dev-600-Role
+ELK-Dev-FE-619-Role
+ELK-Dev-MO-621-Role
+ELK-Dev-QA-680-Role
+
+# Application Support roles
+ELK-AppSupport-GL-290-Role
+ELK-AppSupport-Core-Services-210-Role
+ELK-AppSupport-Recon-291-Role
+
+# Infrastructure roles
+elastic_rw_file
+elastic_ro_metric
+
+# Platform Engineering
+ELK-PlatEng-730-Role
+
+# TechOps
+ELK-TechOps-798-Role
+
+# Add your custom roles below:
