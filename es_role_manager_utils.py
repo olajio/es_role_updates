@@ -119,6 +119,25 @@ class ElasticsearchRoleManager:
         return backup_file
     
     @staticmethod
+    def normalize_pattern_for_comparison(pattern: str) -> str:
+        """
+        Normalize a pattern for comparison purposes
+        
+        Args:
+            pattern: Index pattern (may contain commas)
+            
+        Returns:
+            Normalized pattern (sorted if comma-separated)
+            
+        Note: This is used for comparison only. Original order is preserved for storage.
+        """
+        if ',' in pattern:
+            # Split, strip, sort, and rejoin for consistent comparison
+            parts = [p.strip() for p in pattern.split(',')]
+            return ','.join(sorted(parts))
+        return pattern.strip()
+    
+    @staticmethod
     def extract_remote_patterns(role_definition: Dict) -> Set[Tuple[str, str]]:
         """
         Extract remote index patterns from a role definition
@@ -131,7 +150,7 @@ class ElasticsearchRoleManager:
             e.g., {('prod', 'filebeat-*'), ('qa', 'filebeat-*')}
             
         Note: Handles comma-separated patterns like "prod:traces-apm*,prod:logs-apm*"
-              by keeping them together as "traces-apm*,logs-apm*"
+              by keeping them together as "traces-apm*,logs-apm*" in ORIGINAL ORDER
         """
         remote_patterns = set()
         
@@ -162,7 +181,7 @@ class ElasticsearchRoleManager:
                         
                         if cluster_prefix and local_patterns:
                             # All patterns have same cluster prefix
-                            # Keep them together as comma-separated
+                            # Keep them together as comma-separated IN ORIGINAL ORDER
                             combined_pattern = ','.join(local_patterns)
                             remote_patterns.add((cluster_prefix, combined_pattern))
                         else:
@@ -198,21 +217,22 @@ class ElasticsearchRoleManager:
             remote_patterns: Set of (cluster, pattern) tuples
             
         Returns:
-            Set of base patterns (without cluster prefix), normalized
+            Set of base patterns (without cluster prefix), preserving original order
             
-        Note: For comma-separated patterns, sorts the components for consistency
+        Note: Preserves original order of comma-separated patterns for readability.
+              Uses normalization only for deduplication.
         """
         base_patterns = set()
+        seen_normalized = set()  # Track normalized versions to avoid duplicates
         
         for _, pattern in remote_patterns:
-            # Normalize comma-separated patterns
-            if ',' in pattern:
-                # Split, strip, sort, and rejoin for consistent comparison
-                parts = [p.strip() for p in pattern.split(',')]
-                normalized = ','.join(sorted(parts))
-                base_patterns.add(normalized)
-            else:
-                base_patterns.add(pattern.strip())
+            pattern = pattern.strip()
+            normalized = ElasticsearchRoleManager.normalize_pattern_for_comparison(pattern)
+            
+            # Only add if we haven't seen this pattern before (using normalized comparison)
+            if normalized not in seen_normalized:
+                base_patterns.add(pattern)  # Add original order version
+                seen_normalized.add(normalized)
         
         return base_patterns
     
@@ -225,11 +245,9 @@ class ElasticsearchRoleManager:
             role_definition: Role definition dictionary
             
         Returns:
-            Set of local index patterns (including comma-separated ones)
+            Set of local index patterns in their original form
             
-        Note: Normalizes patterns by:
-              - Removing whitespace around commas
-              - Sorting comma-separated patterns for consistent comparison
+        Note: Returns patterns as they appear in the role (original order preserved)
         """
         local_patterns = set()
         
@@ -237,14 +255,31 @@ class ElasticsearchRoleManager:
             for name in index_entry.get('names', []):
                 # Local patterns don't have cluster prefix (no colon)
                 if ':' not in name:
-                    # Normalize comma-separated patterns
-                    if ',' in name:
-                        # Split, strip, sort, and rejoin for consistent comparison
-                        parts = [p.strip() for p in name.split(',')]
-                        normalized = ','.join(sorted(parts))
-                        local_patterns.add(normalized)
-                    else:
-                        local_patterns.add(name.strip())
+                    local_patterns.add(name.strip())
+        
+        return local_patterns
+    
+    @staticmethod
+    def get_existing_local_patterns_normalized(role_definition: Dict) -> Set[str]:
+        """
+        Get existing local index patterns from a role in normalized form for comparison
+        
+        Args:
+            role_definition: Role definition dictionary
+            
+        Returns:
+            Set of normalized local index patterns (for comparison)
+            
+        Note: Normalizes comma-separated patterns by sorting for consistent comparison
+        """
+        local_patterns = set()
+        
+        for index_entry in role_definition.get('indices', []):
+            for name in index_entry.get('names', []):
+                # Local patterns don't have cluster prefix (no colon)
+                if ':' not in name:
+                    normalized = ElasticsearchRoleManager.normalize_pattern_for_comparison(name)
+                    local_patterns.add(normalized)
         
         return local_patterns
     
@@ -258,6 +293,7 @@ class ElasticsearchRoleManager:
             
         Returns:
             Tuple of (needs_update, patterns_to_add)
+            patterns_to_add preserves original order of comma-separated patterns
         """
         # Skip reserved roles
         if role_definition.get('metadata', {}).get('_reserved'):
@@ -271,9 +307,14 @@ class ElasticsearchRoleManager:
             return False, set()
         
         base_patterns = self.get_base_patterns(remote_patterns)
-        existing_local = self.get_existing_local_patterns(role_definition)
+        existing_local_normalized = self.get_existing_local_patterns_normalized(role_definition)
         
-        patterns_to_add = base_patterns - existing_local
+        # Compare using normalized patterns, but keep original order for patterns_to_add
+        patterns_to_add = set()
+        for pattern in base_patterns:
+            normalized = self.normalize_pattern_for_comparison(pattern)
+            if normalized not in existing_local_normalized:
+                patterns_to_add.add(pattern)  # Keep original order
         
         if patterns_to_add:
             self.logger.info(f"Role {role_name} needs {len(patterns_to_add)} patterns added: {patterns_to_add}")
@@ -293,7 +334,7 @@ class ElasticsearchRoleManager:
             Updated role definition
             
         Note: Comma-separated patterns are kept as single entries to match
-              the format of remote patterns like "prod:traces-apm*,prod:logs-apm*"
+              the format of remote patterns. Original order is preserved for readability.
         """
         # Create a deep copy to avoid modifying the original
         updated_role = json.loads(json.dumps(role_definition))
@@ -319,13 +360,12 @@ class ElasticsearchRoleManager:
                 'allow_restricted_indices': False
             }
         
-        # Sort patterns for consistent ordering
-        # Note: Comma-separated patterns are kept as single strings
-        sorted_patterns = sorted(list(patterns_to_add))
+        # Convert set to list preserving insertion order (no sorting)
+        patterns_list = list(patterns_to_add)
         
         # Create new entry for local patterns
         new_entry = {
-            'names': sorted_patterns,
+            'names': patterns_list,
             'privileges': template_entry.get('privileges', ['read', 'view_index_metadata']),
             'allow_restricted_indices': template_entry.get('allow_restricted_indices', False)
         }
