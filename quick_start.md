@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-## Before You Begin
+## Prerequisites
 
 You'll need:
 - Python 3.8+
