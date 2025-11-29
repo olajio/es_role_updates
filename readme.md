@@ -1,6 +1,6 @@
 # Elasticsearch Role Manager for Cross-Cluster Search
 
-A Python tool that automatically fixes Elasticsearch roles so users can generate CSV reports when working with Cross-Cluster Search (CCS) remote indices.
+Thisn script automatically fixes Elasticsearch roles so users can generate CSV reports when working with Cross-Cluster Search (CCS) remote indices.
 
 ## The Problem
 
