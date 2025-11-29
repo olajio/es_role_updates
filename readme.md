@@ -1,90 +1,70 @@
-# Elasticsearch Role Manager for Cross-Cluster Search (CCS)
+# Elasticsearch Role Manager for Cross-Cluster Search
 
-A comprehensive Python toolkit for managing Elasticsearch roles in Cross-Cluster Search environments. This tool automatically updates roles that have remote index access patterns to include corresponding local index patterns, ensuring proper CSV report generation capabilities.
+A Python tool that automatically fixes Elasticsearch roles so users can generate CSV reports when working with Cross-Cluster Search (CCS) remote indices.
 
-## Problem Statement
+## The Problem
 
-In Elasticsearch Cross-Cluster Search (CCS) environments, when roles have access to remote indices (e.g., `prod:filebeat-*`, `qa:filebeat-*`), users may not be able to generate CSV reports unless the role also has access to the corresponding local index pattern (e.g., `filebeat-*`).
+Users with access to remote indices like `prod:filebeat-*` or `qa:metrics-*` can search across clusters just fine, but they can't generate CSV reports in Kibana. This is because Elasticsearch needs the role to also have access to the local equivalent (like `filebeat-*`) for CSV generation to work.
 
-This toolkit automates the process of:
-1. Identifying roles with remote index patterns
-2. Extracting the base index patterns
-3. Adding the corresponding local index patterns to those roles
-4. Verifying the changes were applied correctly
+Manually adding these local patterns to dozens or hundreds of roles is tedious and error-prone. This tool does it for you.
 
-## Features
+## What It Does
 
-- ✅ **Two Update Modes**: Automatic update of all roles or selective update of specified roles
-- ✅ **Automatic Backup**: Creates timestamped backups before making any changes
-- ✅ **Dry Run Mode**: Preview changes without modifying roles
-- ✅ **Comprehensive Logging**: Detailed logs for troubleshooting and audit trails
-- ✅ **Verification**: Automatically verifies that changes were applied correctly
-- ✅ **Error Handling**: Robust error handling with optional continue-on-error mode
-- ✅ **Report Generation**: Creates detailed JSON reports of all operations
-- ✅ **API Key Authentication**: Secure authentication using Elasticsearch API keys
-- ✅ **Production-Ready**: Includes retry logic, validation, and rollback capabilities
+The script:
+1. Connects to your Elasticsearch cluster
+2. Finds all roles with remote index access patterns (anything with `:` in the pattern)
+3. Figures out what local patterns are needed
+4. Adds those local patterns to the roles
+5. Creates backups and logs everything along the way
+
+It's smart about comma-separated patterns too - if you have `prod:traces-apm*,prod:logs-apm*,prod:metrics-apm*`, it converts that to `traces-apm*,logs-apm*,metrics-apm*` while preserving the order so you can easily verify it worked.
 
 ## Requirements
 
-- Python 3.8 or higher
-- `requests` library
-- Elasticsearch 7.x or 8.x cluster
-- API key with appropriate permissions (manage_security privilege)
+- Python 3.8 or newer
+- The `requests` library (`pip install requests`)
+- An Elasticsearch API key with `manage_security` privilege
+- Network access to your Elasticsearch cluster
 
 ## Installation
 
-1. Clone or download the files:
-   ```bash
-   # Download the files
-   curl -O https://your-repo/es_role_manager_utils.py
-   curl -O https://your-repo/es_role_auto_update.py
-   curl -O https://your-repo/es_role_selective_update.py
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Make scripts executable (optional):
-   ```bash
-   chmod +x es_role_auto_update.py
-   chmod +x es_role_selective_update.py
-   ```
-
-## Creating an API Key
-
-You need an API key with `manage_security` cluster privilege:
-
 ```bash
-# Using curl
-curl -X POST "https://your-es-cluster:9200/_security/api_key" \
-  -H "Content-Type: application/json" \
-  -u elastic:your-password \
-  -d '{
-    "name": "role-manager-key",
-    "role_descriptors": {
-      "role-manager": {
-        "cluster": ["manage_security", "manage"],
-        "indices": [
-          {
-            "names": ["*"],
-            "privileges": ["read", "monitor"]
-          }
-        ]
-      }
-    }
-  }'
+# Get the files (download from your repo/shared drive/wherever)
+# You need: es_role_auto_update.py and es_role_manager_utils.py
+
+# Install the dependency
+pip install requests
+
+# Done!
 ```
 
-Or using Kibana Dev Tools:
+## Configuration
+
+Before you run anything, open `es_role_auto_update.py` and set your Elasticsearch URL:
+
+```python
+# Look for this around line 23
+ELASTICSEARCH_URL = "https://localhost:9200"
+```
+
+Change `localhost:9200` to your actual cluster address. Examples:
+- `"https://prod-es.company.com:9200"`
+- `"https://10.1.2.3:9200"`
+- `"https://my-cluster.us-east-1.aws.found.io:9243"`
+
+If you manage multiple clusters, just make copies of the script with different URLs configured. See the [Multi-Cluster Setup](#multi-cluster-setup) section.
+
+## Getting an API Key
+
+You need an API key that can manage roles. Run this in Kibana Dev Tools:
+
 ```
 POST /_security/api_key
 {
   "name": "role-manager-key",
   "role_descriptors": {
     "role-manager": {
-      "cluster": ["manage_security", "manage"],
+      "cluster": ["manage_security"],
       "indices": [
         {
           "names": ["*"],
@@ -96,450 +76,390 @@ POST /_security/api_key
 }
 ```
 
-Save the returned API key in a secure location.
+Save the key that comes back. You'll use it every time you run the script.
 
 ## Usage
 
-### Script 1: Automatic Update (All Roles)
+The script has two modes: update everything, or update specific roles.
 
-Updates all roles that need updating automatically.
+### Update All Roles
 
-#### Basic Usage
-
-```bash
-# Dry run to see what would change
-python es_role_auto_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --dry-run
-
-# Actually update roles
-python es_role_auto_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY
-```
-
-#### Advanced Options
+This goes through every role and adds the needed local patterns.
 
 ```bash
-# Custom backup and log directories
-python es_role_auto_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --backup-dir /path/to/backups \
-  --log-dir /path/to/logs \
-  --log-level DEBUG
+# Always start with a dry run to see what would change
+python es_role_auto_update.py --api-key YOUR_KEY --dry-run
 
-# Generate report only (no updates)
-python es_role_auto_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --report-only
-
-# Skip backup (not recommended for production)
-python es_role_auto_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --no-backup
+# If that looks good, run it for real
+python es_role_auto_update.py --api-key YOUR_KEY
 ```
 
-### Script 2: Selective Update (Specific Roles)
+### Update Specific Roles
 
-Updates only the roles you specify.
-
-#### Basic Usage
+Maybe you only want to fix a handful of roles. You can list them on the command line:
 
 ```bash
-# Update specific roles (command line)
-python es_role_selective_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --roles ELK-Dev-600-Role ELK-AppSupport-GL-290-Role \
-  --dry-run
-
-# Update roles from a file
-python es_role_selective_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --role-file roles_to_update.txt
+python es_role_auto_update.py \
+  --api-key YOUR_KEY \
+  --roles ELK-Dev-600-Role elastic_rw_file ELK-AppSupport-GL-290-Role
 ```
 
-#### Role File Format
+Or put them in a file (one per line):
 
-Create a text file with one role name per line:
-
-```
-# roles_to_update.txt
-# Lines starting with # are comments
-
+```bash
+# Create a file with role names
+cat > roles.txt << EOF
 ELK-Dev-600-Role
-ELK-AppSupport-GL-290-Role
 elastic_rw_file
-ELK-PPM-690-Role
+ELK-AppSupport-GL-290-Role
+EOF
+
+# Run the script with that file
+python es_role_auto_update.py --api-key YOUR_KEY --role-file roles.txt
 ```
 
-#### Advanced Options
+See `example_roles_to_update.txt` for an example file with comments.
+
+### Just Generate a Report
+
+Want to see what needs updating without changing anything?
 
 ```bash
-# Continue updating even if one role fails
-python es_role_selective_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --roles role1 role2 role3 \
-  --continue-on-error
-
-# Force update even if role appears current
-python es_role_selective_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --roles problematic-role \
-  --force
-
-# Skip verification (faster, but less safe)
-python es_role_selective_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY \
-  --roles role1 \
-  --no-verify
+python es_role_auto_update.py --api-key YOUR_KEY --report-only
 ```
 
-## Command Line Options
+This creates a JSON report in the `logs/` directory showing which roles need updates and what patterns would be added.
 
-### Common Options (Both Scripts)
+## Common Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--es-url` | Elasticsearch URL (required) | - |
-| `--api-key` | API key for authentication (required) | - |
-| `--backup-dir` | Directory for role backups | `./backups` |
-| `--log-dir` | Directory for log files | `./logs` |
-| `--dry-run` | Preview changes without updating | `False` |
-| `--no-backup` | Skip backup creation | `False` |
-| `--verify-ssl` | Verify SSL certificates | `False` |
-| `--log-level` | Logging level (DEBUG/INFO/WARNING/ERROR) | `INFO` |
-
-### Auto Update Specific Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--report-only` | Generate report without updating | `False` |
-
-### Selective Update Specific Options
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--roles` | Space-separated list of role names | - |
-| `--role-file` | File containing role names | - |
-| `--no-verify` | Skip verification after update | `False` |
-| `--continue-on-error` | Continue if a role update fails | `False` |
-| `--force` | Force update even if not needed | `False` |
-
-## Output Files
-
-### Backups
-
-Backups are stored in timestamped JSON files:
-```
-backups/
-  └── roles_backup_20241128_143022.json
-```
-
-### Logs
-
-Detailed logs are created for each run:
-```
-logs/
-  ├── role_auto_update_20241128_143022.log
-  └── role_selective_update_20241128_143530.log
-```
-
-### Reports
-
-JSON reports detail what was changed:
-```
-logs/
-  ├── role_update_report_20241128_143022.json
-  └── role_update_status_20241128_143530.json
-```
-
-## Example Workflows
-
-### Workflow 1: Safe Production Update
+Here are the flags you'll use most often:
 
 ```bash
-# 1. Generate report to see what needs updating
-python es_role_auto_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY \
-  --report-only
+--dry-run              # See what would change without actually changing it
+--report-only          # Generate a report without updating anything
+--roles role1 role2    # Update only these specific roles
+--role-file file.txt   # Update only the roles listed in this file
+--log-level DEBUG      # Turn on detailed logging for troubleshooting
+--continue-on-error    # Keep going even if updating one role fails
+--force                # Update a role even if the script thinks it's already good
+```
 
-# 2. Review the report
+## Examples
+
+### Example 1: First Time in Production
+
+```bash
+# Step 1: See what's out there
+python es_role_auto_update.py --api-key $API_KEY --report-only
+
+# Step 2: Review the report
 cat logs/role_update_report_*.json
 
-# 3. Dry run to preview changes
-python es_role_auto_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY \
-  --dry-run
+# Step 3: Test run to see what would happen
+python es_role_auto_update.py --api-key $API_KEY --dry-run
 
-# 4. Execute actual updates
-python es_role_auto_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY
+# Step 4: Read the output carefully - does it make sense?
 
-# 5. Verify logs
+# Step 5: If yes, do it
+python es_role_auto_update.py --api-key $API_KEY
+
+# Step 6: Check the logs
 tail -100 logs/role_auto_update_*.log
 ```
 
-### Workflow 2: Update Specific Roles After Review
+### Example 2: New Roles Just Got Created
 
 ```bash
-# 1. Get list of roles with remote patterns
+# See if the new roles need updating
+python es_role_auto_update.py --api-key $API_KEY --report-only
+
+# Update just those specific roles
 python es_role_auto_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY \
-  --report-only
-
-# 2. Create a file with roles to update
-cat > roles_to_update.txt << EOF
-ELK-Dev-600-Role
-ELK-PPM-690-Role
-elastic_rw_file
-EOF
-
-# 3. Dry run with selected roles
-python es_role_selective_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY \
-  --role-file roles_to_update.txt \
-  --dry-run
-
-# 4. Execute updates
-python es_role_selective_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY \
-  --role-file roles_to_update.txt
+  --api-key $API_KEY \
+  --roles new-role-1 new-role-2 new-role-3
 ```
 
-### Workflow 3: Troubleshooting a Failed Update
+### Example 3: Something's Not Right with One Role
 
 ```bash
-# 1. Update with maximum logging
-python es_role_selective_update.py \
-  --es-url https://prod-es:9200 \
-  --api-key $ES_API_KEY \
+# Turn on debug logging and force an update
+python es_role_auto_update.py \
+  --api-key $API_KEY \
   --roles problematic-role \
   --log-level DEBUG \
   --force
 
-# 2. Check detailed logs
-cat logs/role_selective_update_*.log | grep ERROR
-
-# 3. Restore from backup if needed
-# (Use Elasticsearch restore API with backup file)
+# Check what happened
+cat logs/role_auto_update_*.log | grep -A 5 "problematic-role"
 ```
 
 ## Understanding the Output
 
-### Console Output
+When you run the script, you'll see output like this:
 
-During execution, you'll see:
-- ✓ Successful operations
-- ✗ Failed operations
-- ○ Skipped operations (no changes needed)
-
-### Log Levels
-
-- **INFO**: Normal operations and progress
-- **WARNING**: Non-critical issues (e.g., reserved roles skipped)
-- **ERROR**: Failed operations
-- **DEBUG**: Detailed information for troubleshooting
-
-### Report Structure
-
-The JSON report includes:
-```json
-{
-  "timestamp": "2024-11-28T14:30:22.123456",
-  "total_roles": 15,
-  "roles": {
-    "ELK-Dev-600-Role": {
-      "patterns_to_add": ["filebeat-*", "metricbeat-*"],
-      "pattern_count": 2
-    }
-  }
-}
+```
+INFO - Elasticsearch Role Auto-Updater
+INFO - Elasticsearch URL: https://your-cluster:9200
+INFO - Testing connection to Elasticsearch...
+INFO - Successfully connected to Elasticsearch: 8.11.0
+INFO - Retrieving all roles...
+INFO - Retrieved 150 roles from Elasticsearch
+INFO - Analyzing roles for required updates...
+INFO - ✓ ELK-Dev-600-Role: needs 2 patterns
+INFO - ✓ elastic_rw_file: needs 3 patterns
+INFO - Found 25 roles that need updating
 ```
 
-## Troubleshooting
+Then when it updates:
 
-### Connection Issues
-
-```bash
-# Test with curl first
-curl -H "Authorization: ApiKey YOUR_API_KEY" \
-  https://your-es-cluster:9200
-
-# If SSL issues, disable verification (not recommended for production)
-python es_role_auto_update.py \
-  --es-url https://your-es-cluster:9200 \
-  --api-key YOUR_API_KEY
+```
+[1/25] Processing role: ELK-Dev-600-Role
+  Patterns to add: filebeat-*, metricbeat-*
+  ✓ Successfully updated ELK-Dev-600-Role
 ```
 
-### Permission Issues
+At the end you get a summary:
 
-Ensure your API key has `manage_security` privilege:
-```bash
-# Check API key info
-curl -H "Authorization: ApiKey YOUR_API_KEY" \
-  https://your-es-cluster:9200/_security/_authenticate
+```
+======================================================================
+SUMMARY
+======================================================================
+Update mode: ALL ROLES
+Total roles analyzed: 25
+Successfully updated: 25
+Failed to update: 0
+Verified successfully: 25/25
 ```
 
-### Role Not Updating
+## Files the Script Creates
 
-1. Check if role is reserved (will be skipped automatically)
-2. Use `--force` flag to force update
-3. Enable DEBUG logging: `--log-level DEBUG`
-4. Check the detailed log file
+### Backups
 
-### Verification Failures
+Every time you run the script (unless you use `--no-backup` which you really shouldn't), it creates a backup:
 
-If verification fails but update succeeded:
-1. Check Elasticsearch cluster health
-2. Wait a few seconds and manually verify in Kibana
-3. Check logs for specific error messages
+```
+backups/roles_backup_20241129_140530.json
+```
 
-## Rollback Procedure
+This is a complete snapshot of all the roles before any changes. Keep these around - you'll want them if you need to roll back.
 
-If something goes wrong, you can restore from backups:
+### Logs
 
-### Using the Backup File
+Detailed logs go here:
+
+```
+logs/role_auto_update_20241129_140530.log
+```
+
+These have everything - what the script found, what it changed, any errors, all of it. Check these after every run, especially in production.
+
+### Reports
+
+JSON reports with details on what was done:
+
+```
+logs/role_update_report_20241129_140530.json
+```
+
+Good for tracking what changed over time.
+
+## Verifying It Worked
+
+After running the script:
+
+1. **Check the exit code**
+   ```bash
+   echo $?  # Should be 0 for success
+   ```
+
+2. **Look for errors in the logs**
+   ```bash
+   grep ERROR logs/role_auto_update_*.log
+   ```
+
+3. **Spot-check a few roles in Kibana**
+   - Stack Management → Security → Roles
+   - Open a role that was updated
+   - Look at the Indices section
+   - You should see both remote patterns (with cluster prefix) and local patterns (without prefix)
+
+4. **Actually test CSV report generation**
+   - Log in as a user with one of the updated roles
+   - Go to Discover, search for some data
+   - Try to generate a CSV report
+   - It should work now
+
+## Rolling Back
+
+Every run creates a backup. If something goes wrong, here's how to restore a role:
 
 ```python
 import json
 import requests
 
-# Load backup
-with open('backups/roles_backup_20241128_143022.json', 'r') as f:
+# Load the backup file
+with open('backups/roles_backup_20241129_140530.json', 'r') as f:
     roles = json.load(f)
 
-# Restore a specific role
+# Get the role you want to restore
 role_name = 'ELK-Dev-600-Role'
 role_def = roles[role_name]
 
-# Remove metadata fields that shouldn't be restored
+# Clean out the metadata fields that shouldn't be in the update
 clean_def = {k: v for k, v in role_def.items() 
             if k not in ['_reserved', '_deprecated', '_deprecated_reason']}
 
-# Update Elasticsearch
+# Put it back
 response = requests.put(
-    f'https://your-es-cluster:9200/_security/role/{role_name}',
+    f'https://your-cluster:9200/_security/role/{role_name}',
     headers={
         'Authorization': f'ApiKey YOUR_API_KEY',
         'Content-Type': 'application/json'
     },
-    json=clean_def
+    json=clean_def,
+    verify=False  # only if you have SSL issues
 )
+
+print(f"Status: {response.status_code}")  # Should be 200
 ```
 
-## Best Practices
+## Multi-Cluster Setup
 
-### For Production Environments
-
-1. **Always run dry-run first**: Use `--dry-run` to preview changes
-2. **Review reports**: Check generated reports before proceeding
-3. **Keep backups**: Default backup behavior is enabled for a reason
-4. **Test in non-production first**: Validate the scripts in QA/Dev
-5. **Use API keys**: More secure than basic authentication
-6. **Review logs**: Always check logs after updates
-7. **Schedule maintenance windows**: Run updates during low-traffic periods
-8. **Version control backups**: Store backup files in version control
-9. **Document changes**: Keep a changelog of role updates
-10. **Monitor after changes**: Watch for any access issues after updates
-
-### Security Considerations
-
-1. **Protect API keys**: Store in environment variables or secret managers
-2. **Limit API key scope**: Use minimum required privileges
-3. **Rotate keys regularly**: Change API keys periodically
-4. **Audit logs**: Keep logs for compliance and auditing
-5. **Restrict access**: Limit who can run these scripts
-
-## Advanced Usage
-
-### Using Environment Variables
+If you manage multiple Elasticsearch clusters, make environment-specific copies of the script:
 
 ```bash
-# Set environment variables
-export ES_URL="https://your-es-cluster:9200"
-export ES_API_KEY="your-api-key-here"
+# Make copies for each environment
+cp es_role_auto_update.py es_role_auto_update_prod.py
+cp es_role_auto_update.py es_role_auto_update_qa.py
+cp es_role_auto_update.py es_role_auto_update_dev.py
 
-# Use in script
-python es_role_auto_update.py \
-  --es-url "$ES_URL" \
-  --api-key "$ES_API_KEY"
+# Edit each one and set the right URL
+# In es_role_auto_update_prod.py:
+#   ELASTICSEARCH_URL = "https://prod-es.company.com:9200"
+#
+# In es_role_auto_update_qa.py:
+#   ELASTICSEARCH_URL = "https://qa-es.company.com:9200"
+#
+# And so on...
+
+# Now you can run them separately
+python es_role_auto_update_prod.py --api-key $PROD_KEY
+python es_role_auto_update_qa.py --api-key $QA_KEY
+python es_role_auto_update_dev.py --api-key $DEV_KEY
 ```
 
-### Integrating with CI/CD
+## Troubleshooting
 
-```bash
-#!/bin/bash
-# update_roles.sh
+### "Failed to connect to Elasticsearch"
 
-set -euo pipefail
+Check:
+- Is the ELASTICSEARCH_URL in the script correct?
+- Can you reach that host from where you're running the script?
+- Try: `curl https://your-cluster:9200`
+- If it's an SSL error, you might need to set `verify_ssl = False` in the script (but try to fix the SSL issue instead)
 
-# Load secrets
-source /path/to/secrets.env
+### "Permission denied" or "Unauthorized"
 
-# Update roles
-python es_role_auto_update.py \
-  --es-url "$ES_URL" \
-  --api-key "$ES_API_KEY" \
-  --backup-dir /backups/elasticsearch/roles \
-  --log-dir /logs/elasticsearch/roles
+Check:
+- Is your API key valid? `curl -H "Authorization: ApiKey YOUR_KEY" https://cluster:9200/_security/_authenticate`
+- Does the API key have `manage_security` privilege?
+- Did you accidentally include quotes around the API key value?
 
-# Check exit code
-if [ $? -eq 0 ]; then
-  echo "Role update successful"
-  # Send notification
-else
-  echo "Role update failed"
-  # Send alert
-  exit 1
-fi
-```
+### "Role not found"
 
-### Scheduled Updates with Cron
+- You have a typo in the role name
+- The role doesn't exist in this cluster (maybe you're pointed at the wrong cluster?)
+- List all roles: `curl -H "Authorization: ApiKey YOUR_KEY" https://cluster:9200/_security/role`
 
-```bash
-# Run weekly on Sunday at 2 AM
-0 2 * * 0 /usr/bin/python3 /opt/scripts/es_role_auto_update.py --es-url "$ES_URL" --api-key "$ES_API_KEY" 2>&1 | tee -a /var/log/es-role-updates.log
-```
+### Script ran but CSV reports still don't work
+
+- Double-check the role in Kibana - are the local patterns actually there?
+- Is the user assigned this role?
+- Do the indices actually exist?
+- Try having the user log out and back in
+- Check the local patterns match what you expect
+
+### Role keeps showing up as needing updates
+
+- This might mean there are patterns with different ordering
+- Use `--log-level DEBUG` to see exactly what the script is comparing
+- Check if the local pattern already exists but in a different format (spacing, order, etc.)
+
+## Production Best Practices
+
+Here's what to do when running this in production:
+
+**Before:**
+- Test in dev/QA first with the same types of roles you have in prod
+- Run with `--dry-run` and actually read the output
+- Schedule a maintenance window (even though the script is fast, be safe)
+- Let stakeholders know this is happening
+- Have your rollback procedure documented and ready
+- Make sure you know where the backups are going and that you can access them
+
+**During:**
+- Monitor the output as it runs
+- Keep the terminal session open until it's done
+- If you see a lot of errors, Ctrl+C and investigate before continuing
+- Use `--continue-on-error` if you're updating a lot of roles and don't want one failure to stop everything
+
+**After:**
+- Check the exit code (`echo $?` should be 0)
+- Review the summary at the end of the output
+- `grep ERROR logs/role_auto_update_*.log` to see if anything failed
+- Spot-check a few roles in Kibana
+- Test CSV report generation with a real user
+- Keep the backup file - don't delete it for at least 30 days
+
+## Security Notes
+
+- **API keys are sensitive** - don't hardcode them in scripts, don't commit them to git, don't share them in Slack
+- Store them in environment variables or use a secrets manager
+- Rotate API keys periodically
+- Use separate API keys for different environments (don't use your prod key in QA)
+- Keep the log files secure - they might contain role names and index patterns
+- Review who has access to run this script
 
 ## FAQ
 
-**Q: Will this script modify reserved roles?**
-A: No, reserved roles (marked with `_reserved: true`) are automatically skipped.
+**Q: Will this change reserved roles like kibana_system?**
 
-**Q: What happens if the script fails midway?**
-A: Each role is updated individually. Failed roles won't affect successful updates. Use `--continue-on-error` to process all roles despite failures.
+A: No, the script automatically skips any role with `_reserved: true`.
 
-**Q: Can I run this against multiple clusters?**
-A: Yes, run the script separately for each cluster with different `--es-url` values.
+**Q: What if the script fails halfway through updating 100 roles?**
 
-**Q: How do I know which roles need updating?**
-A: Use `--report-only` or `--dry-run` to generate a report without making changes.
+A: Each role is updated independently. If one fails, the others that already succeeded are still updated. Use `--continue-on-error` to keep processing the rest.
 
-**Q: Is it safe to run this in production?**
-A: Yes, when following best practices: use dry-run first, keep backups, and test in non-production first.
+**Q: Can I run this from a cron job?**
 
-**Q: What if I need to restore a role?**
-A: Use the backup JSON file and the Elasticsearch role API to restore the original definition.
+A: Yes, but make sure you're monitoring the logs and handling failures appropriately. And please don't run it more than once a day - there's usually no need.
 
-## Support and Contributions
+**Q: Does this work with Elastic Cloud?**
 
-For issues, questions, or contributions, please contact your DevOps team or create an issue in your organization's repository.
+A: Yep! Just set the ELASTICSEARCH_URL to your cloud endpoint.
+
+**Q: Why do I need local patterns when I have remote patterns?**
+
+A: It's a quirk of how CSV report generation works in Kibana. The export functionality needs to resolve index patterns locally, even for remote data. Adding the local pattern lets Elasticsearch properly route the export request.
+
+**Q: Will this affect users currently using these roles?**
+
+A: It only adds permissions, never removes them. Users might suddenly be able to do things they couldn't before (like generate CSV reports), but they won't lose any existing access.
+
+**Q: What if a role already has some of the local patterns but not all?**
+
+A: The script only adds the ones that are missing. It won't duplicate patterns that already exist.
+
+## Getting Help
+
+Need more info?
+- Run `python es_role_auto_update.py --help` for all options
+- Check `QUICK_START.md` for quick examples
+- Look at your log files - they're very detailed
+- Check the Elasticsearch documentation on roles and CCS
+
+Still stuck? Talk to whoever gave you this script - they probably know your specific setup better than a generic README does.
 
 ## License
 
-Internal use only. All rights reserved.
+This is an internal tool. Use it responsibly, don't break production, and always have backups.
