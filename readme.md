@@ -335,10 +335,10 @@ cp es_role_auto_update.py es_role_auto_update_dev.py
 
 # Edit each one and set the right URL
 # In es_role_auto_update_prod.py:
-#   ELASTICSEARCH_URL = "https://prod-es.company.com:9200"
+#   ELASTICSEARCH_URL = "https://prod_es_url"
 #
 # In es_role_auto_update_qa.py:
-#   ELASTICSEARCH_URL = "https://qa-es.company.com:9200"
+#   ELASTICSEARCH_URL = "https://qa_es_url"
 #
 # And so on...
 
