@@ -129,6 +129,9 @@ class ElasticsearchRoleManager:
         Returns:
             Set of tuples (cluster_prefix, index_pattern)
             e.g., {('prod', 'filebeat-*'), ('qa', 'filebeat-*')}
+            
+        Note: Handles comma-separated patterns like "prod:traces-apm*,prod:logs-apm*"
+              by keeping them together as "traces-apm*,logs-apm*"
         """
         remote_patterns = set()
         
@@ -136,11 +139,45 @@ class ElasticsearchRoleManager:
         for index_entry in role_definition.get('indices', []):
             for name in index_entry.get('names', []):
                 if ':' in name:
-                    # Split on first colon only
-                    parts = name.split(':', 1)
-                    if len(parts) == 2:
-                        cluster_prefix, pattern = parts
-                        remote_patterns.add((cluster_prefix, pattern))
+                    # Check if this is a comma-separated list of remote patterns
+                    # e.g., "prod:traces-apm*,prod:logs-apm*,prod:metrics-apm*"
+                    if ',' in name:
+                        # Parse comma-separated remote patterns
+                        parts = name.split(',')
+                        cluster_prefix = None
+                        local_patterns = []
+                        
+                        for part in parts:
+                            part = part.strip()
+                            if ':' in part:
+                                # Extract cluster prefix and pattern
+                                cluster, pattern = part.split(':', 1)
+                                if cluster_prefix is None:
+                                    cluster_prefix = cluster
+                                elif cluster != cluster_prefix:
+                                    # Mixed clusters in comma-separated list - treat separately
+                                    cluster_prefix = None
+                                    break
+                                local_patterns.append(pattern)
+                        
+                        if cluster_prefix and local_patterns:
+                            # All patterns have same cluster prefix
+                            # Keep them together as comma-separated
+                            combined_pattern = ','.join(local_patterns)
+                            remote_patterns.add((cluster_prefix, combined_pattern))
+                        else:
+                            # Mixed clusters or parsing failed - treat each separately
+                            for part in parts:
+                                part = part.strip()
+                                if ':' in part:
+                                    cluster, pattern = part.split(':', 1)
+                                    remote_patterns.add((cluster, pattern))
+                    else:
+                        # Simple remote pattern like "prod:filebeat-*"
+                        parts = name.split(':', 1)
+                        if len(parts) == 2:
+                            cluster_prefix, pattern = parts
+                            remote_patterns.add((cluster_prefix, pattern))
         
         # Check remote_indices section (if exists)
         for index_entry in role_definition.get('remote_indices', []):
@@ -161,9 +198,23 @@ class ElasticsearchRoleManager:
             remote_patterns: Set of (cluster, pattern) tuples
             
         Returns:
-            Set of base patterns (without cluster prefix)
+            Set of base patterns (without cluster prefix), normalized
+            
+        Note: For comma-separated patterns, sorts the components for consistency
         """
-        return {pattern for _, pattern in remote_patterns}
+        base_patterns = set()
+        
+        for _, pattern in remote_patterns:
+            # Normalize comma-separated patterns
+            if ',' in pattern:
+                # Split, strip, sort, and rejoin for consistent comparison
+                parts = [p.strip() for p in pattern.split(',')]
+                normalized = ','.join(sorted(parts))
+                base_patterns.add(normalized)
+            else:
+                base_patterns.add(pattern.strip())
+        
+        return base_patterns
     
     @staticmethod
     def get_existing_local_patterns(role_definition: Dict) -> Set[str]:
@@ -174,15 +225,26 @@ class ElasticsearchRoleManager:
             role_definition: Role definition dictionary
             
         Returns:
-            Set of local index patterns
+            Set of local index patterns (including comma-separated ones)
+            
+        Note: Normalizes patterns by:
+              - Removing whitespace around commas
+              - Sorting comma-separated patterns for consistent comparison
         """
         local_patterns = set()
         
         for index_entry in role_definition.get('indices', []):
             for name in index_entry.get('names', []):
-                # Local patterns don't have cluster prefix
+                # Local patterns don't have cluster prefix (no colon)
                 if ':' not in name:
-                    local_patterns.add(name)
+                    # Normalize comma-separated patterns
+                    if ',' in name:
+                        # Split, strip, sort, and rejoin for consistent comparison
+                        parts = [p.strip() for p in name.split(',')]
+                        normalized = ','.join(sorted(parts))
+                        local_patterns.add(normalized)
+                    else:
+                        local_patterns.add(name.strip())
         
         return local_patterns
     
@@ -225,10 +287,13 @@ class ElasticsearchRoleManager:
         
         Args:
             role_definition: Original role definition
-            patterns_to_add: Set of patterns to add
+            patterns_to_add: Set of patterns to add (may include comma-separated patterns)
             
         Returns:
             Updated role definition
+            
+        Note: Comma-separated patterns are kept as single entries to match
+              the format of remote patterns like "prod:traces-apm*,prod:logs-apm*"
         """
         # Create a deep copy to avoid modifying the original
         updated_role = json.loads(json.dumps(role_definition))
@@ -254,9 +319,13 @@ class ElasticsearchRoleManager:
                 'allow_restricted_indices': False
             }
         
+        # Sort patterns for consistent ordering
+        # Note: Comma-separated patterns are kept as single strings
+        sorted_patterns = sorted(list(patterns_to_add))
+        
         # Create new entry for local patterns
         new_entry = {
-            'names': sorted(list(patterns_to_add)),
+            'names': sorted_patterns,
             'privileges': template_entry.get('privileges', ['read', 'view_index_metadata']),
             'allow_restricted_indices': template_entry.get('allow_restricted_indices', False)
         }
