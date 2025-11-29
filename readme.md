@@ -101,7 +101,7 @@ Maybe you only want to fix a handful of roles. You can list them on the command 
 ```bash
 python es_role_auto_update.py \
   --api-key API_KEY \
-  --roles Role1 elastic_rw_file ELK-AppSupport-GL-290-Role
+  --roles Role1 Role2 ELK-AppSupport-GL-290-Role
 ```
 
 Or put them in a file (one per line):
@@ -110,7 +110,7 @@ Or put them in a file (one per line):
 # Create a file with role names
 cat > roles.txt << EOF
 Role1
-elastic_rw_file
+Role2
 ELK-AppSupport-GL-290-Role
 EOF
 
@@ -206,7 +206,7 @@ INFO - Retrieving all roles...
 INFO - Retrieved 150 roles from Elasticsearch
 INFO - Analyzing roles for required updates...
 INFO - ✓ Role1: needs 2 patterns
-INFO - ✓ elastic_rw_file: needs 3 patterns
+INFO - ✓ Role2: needs 3 patterns
 INFO - Found 25 roles that need updating
 ```
 
