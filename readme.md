@@ -199,7 +199,7 @@ When you run the script, you'll see output like this:
 
 ```
 INFO - Elasticsearch Role Auto-Updater
-INFO - Elasticsearch URL: https://your-cluster:9200
+INFO - Elasticsearch URL: https://es_cluster_url:9200
 INFO - Testing connection to Elasticsearch...
 INFO - Successfully connected to Elasticsearch: 8.11.0
 INFO - Retrieving all roles...
@@ -283,7 +283,7 @@ After running the script:
    - Look at the Indices section
    - You should see both remote patterns (with cluster prefix) and local patterns (without prefix)
 
-4. **Actually test CSV report generation**
+4. **Test CSV report generation**
    - Log in as a user with one of the updated roles
    - Go to Discover, search for some data
    - Try to generate a CSV report
@@ -311,7 +311,7 @@ clean_def = {k: v for k, v in role_def.items()
 
 # Put it back
 response = requests.put(
-    f'https://your-cluster:9200/_security/role/{role_name}',
+    f'https://es_cluster_url:9200/_security/role/{role_name}',
     headers={
         'Authorization': f'ApiKey YOUR_API_KEY',
         'Content-Type': 'application/json'
@@ -355,7 +355,7 @@ python es_role_auto_update_dev.py --api-key $DEV_KEY
 Check:
 - Is the ELASTICSEARCH_URL in the script correct?
 - Can you reach that host from where you're running the script?
-- Try: `curl https://your-cluster:9200`
+- Try: `curl https://es_cluster_url:9200`
 - If it's an SSL error, you might need to set `verify_ssl = False` in the script (but try to fix the SSL issue instead)
 
 ### "Permission denied" or "Unauthorized"
