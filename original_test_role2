@@ -8,7 +8,12 @@
         "client_status",
         "prod:traces-apm*,prod:logs-apm*,prod:metrics-apm*",
         "qa:traces-apm*,qa:logs-apm*,qa:metrics-apm*",
-        "dev:traces-apm*,dev:logs-apm*,dev:metrics-apm*,dev:apm-*"
+        "dev:traces-apm*,dev:logs-apm*,dev:metrics-apm*,dev:apm-*",
+        "prod:filebeat-*",
+        "prod:filebeat-*-inframon-*",
+        "qa:metricbeat-*",
+        "dev:metricbeat-*-mt-*-cw",
+        "*:metricbeat-*-mt-*"
       ],
       "privileges": [
         "read",
