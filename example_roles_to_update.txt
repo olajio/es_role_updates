@@ -1,7 +1,16 @@
-# Example Roles to Update
-# This file shows how to specify roles for selective updates
-# Lines starting with # are comments and will be ignored
-# Empty lines are also ignored
+# Example: Roles to Update
+# 
+# Use this file to specify which roles you want to update instead of updating all roles.
+# This is useful when you only want to update a handful of roles rather than everything.
+#
+# Usage:
+#   python es_role_auto_update.py --api-key YOUR_KEY --role-file example_roles_to_update.txt
+#
+# Format:
+#   - One role name per line
+#   - Lines starting with # are comments (ignored)
+#   - Empty lines are ignored
+#   - No quotes needed around role names
 
 # Development roles
 ELK-Dev-600-Role
@@ -24,4 +33,4 @@ ELK-PlatEng-730-Role
 # TechOps
 ELK-TechOps-798-Role
 
-# Add your custom roles below:
+# Your custom roles go here:
