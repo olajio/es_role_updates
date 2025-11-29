@@ -101,7 +101,7 @@ Maybe you only want to fix a handful of roles. You can list them on the command 
 ```bash
 python es_role_auto_update.py \
   --api-key API_KEY \
-  --roles ELK-Dev-600-Role elastic_rw_file ELK-AppSupport-GL-290-Role
+  --roles Role1 elastic_rw_file ELK-AppSupport-GL-290-Role
 ```
 
 Or put them in a file (one per line):
@@ -109,7 +109,7 @@ Or put them in a file (one per line):
 ```bash
 # Create a file with role names
 cat > roles.txt << EOF
-ELK-Dev-600-Role
+Role1
 elastic_rw_file
 ELK-AppSupport-GL-290-Role
 EOF
@@ -205,7 +205,7 @@ INFO - Successfully connected to Elasticsearch: 8.11.0
 INFO - Retrieving all roles...
 INFO - Retrieved 150 roles from Elasticsearch
 INFO - Analyzing roles for required updates...
-INFO - ✓ ELK-Dev-600-Role: needs 2 patterns
+INFO - ✓ Role1: needs 2 patterns
 INFO - ✓ elastic_rw_file: needs 3 patterns
 INFO - Found 25 roles that need updating
 ```
@@ -213,9 +213,9 @@ INFO - Found 25 roles that need updating
 Then when it updates:
 
 ```
-[1/25] Processing role: ELK-Dev-600-Role
+[1/25] Processing role: Role1
   Patterns to add: filebeat-*, metricbeat-*
-  ✓ Successfully updated ELK-Dev-600-Role
+  ✓ Successfully updated Role1
 ```
 
 At the end you get a summary:
@@ -302,7 +302,7 @@ with open('backups/roles_backup_20241129_140530.json', 'r') as f:
     roles = json.load(f)
 
 # Get the role you want to restore
-role_name = 'ELK-Dev-600-Role'
+role_name = 'Role1'
 role_def = roles[role_name]
 
 # Clean out the metadata fields that shouldn't be in the update
