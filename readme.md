@@ -101,7 +101,7 @@ Maybe you only want to fix a handful of roles. You can list them on the command 
 ```bash
 python es_role_auto_update.py \
   --api-key API_KEY \
-  --roles Role1 Role2 ELK-AppSupport-GL-290-Role
+  --roles Role1 Role2 Role3
 ```
 
 Or put them in a file (one per line):
@@ -111,7 +111,7 @@ Or put them in a file (one per line):
 cat > roles.txt << EOF
 Role1
 Role2
-ELK-AppSupport-GL-290-Role
+Role3
 EOF
 
 # Run the script with that file
