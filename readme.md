@@ -457,9 +457,3 @@ Need more info?
 - Check `QUICK_START.md` for quick examples
 - Look at your log files - they're very detailed
 - Check the Elasticsearch documentation on roles and CCS
-
-Still stuck? Talk to whoever gave you this script - they probably know your specific setup better than a generic README does.
-
-## License
-
-This is an internal tool. Use it responsibly, don't break production, and always have backups.
