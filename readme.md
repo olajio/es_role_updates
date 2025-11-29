@@ -76,7 +76,7 @@ POST /_security/api_key
 }
 ```
 
-Save the key that comes back. You'll use it every time you run the script.
+Save the key as you won't be able to retrieve it after the first time the key is displayed.
 
 ## Usage
 
@@ -88,10 +88,10 @@ This goes through every role and adds the needed local patterns.
 
 ```bash
 # Always start with a dry run to see what would change
-python es_role_auto_update.py --api-key YOUR_KEY --dry-run
+python es_role_auto_update.py --api-key API_KEY --dry-run
 
 # If that looks good, run it for real
-python es_role_auto_update.py --api-key YOUR_KEY
+python es_role_auto_update.py --api-key API_KEY
 ```
 
 ### Update Specific Roles
@@ -100,7 +100,7 @@ Maybe you only want to fix a handful of roles. You can list them on the command 
 
 ```bash
 python es_role_auto_update.py \
-  --api-key YOUR_KEY \
+  --api-key API_KEY \
   --roles ELK-Dev-600-Role elastic_rw_file ELK-AppSupport-GL-290-Role
 ```
 
@@ -115,7 +115,7 @@ ELK-AppSupport-GL-290-Role
 EOF
 
 # Run the script with that file
-python es_role_auto_update.py --api-key YOUR_KEY --role-file roles.txt
+python es_role_auto_update.py --api-key API_KEY --role-file roles.txt
 ```
 
 See `example_roles_to_update.txt` for an example file with comments.
@@ -125,7 +125,7 @@ See `example_roles_to_update.txt` for an example file with comments.
 Want to see what needs updating without changing anything?
 
 ```bash
-python es_role_auto_update.py --api-key YOUR_KEY --report-only
+python es_role_auto_update.py --api-key API_KEY --report-only
 ```
 
 This creates a JSON report in the `logs/` directory showing which roles need updates and what patterns would be added.
@@ -361,7 +361,7 @@ Check:
 ### "Permission denied" or "Unauthorized"
 
 Check:
-- Is your API key valid? `curl -H "Authorization: ApiKey YOUR_KEY" https://cluster:9200/_security/_authenticate`
+- Is your API key valid? `curl -H "Authorization: ApiKey API_KEY" https://cluster:9200/_security/_authenticate`
 - Does the API key have `manage_security` privilege?
 - Did you accidentally include quotes around the API key value?
 
@@ -369,7 +369,7 @@ Check:
 
 - You have a typo in the role name
 - The role doesn't exist in this cluster (maybe you're pointed at the wrong cluster?)
-- List all roles: `curl -H "Authorization: ApiKey YOUR_KEY" https://cluster:9200/_security/role`
+- List all roles: `curl -H "Authorization: ApiKey API_KEY" https://cluster:9200/_security/role`
 
 ### Script ran but CSV reports still don't work
 
