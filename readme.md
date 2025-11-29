@@ -158,7 +158,7 @@ cat logs/role_update_report_*.json
 # Step 3: Test run to see what would happen
 python es_role_auto_update.py --api-key $API_KEY --dry-run
 
-# Step 4: Read the output carefully - does it make sense?
+# Step 4: Read the output carefully validate that it all make sense. It is recommended to run this script on a test role before applying it to all the other roles in the production environment
 
 # Step 5: If yes, do it
 python es_role_auto_update.py --api-key $API_KEY
