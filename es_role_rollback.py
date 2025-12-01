@@ -233,7 +233,7 @@ Examples:
     print(f"Backup file: {args.backup}")
     
     if args.dry_run:
-        print("\n⚠️  DRY RUN MODE - No changes will be made")
+        print("\n  DRY RUN MODE - No changes will be made")
     
     # Test connection
     print("\nTesting connection...")
@@ -247,7 +247,7 @@ Examples:
     # Determine which roles to restore
     if args.all:
         role_names = list(backup_roles.keys())
-        print(f"\n⚠️  WARNING: Restoring ALL {len(role_names)} roles from backup!")
+        print(f"\n  WARNING: Restoring ALL {len(role_names)} roles from backup!")
         if not args.dry_run:
             response = input("Are you sure? Type 'yes' to continue: ")
             if response.lower() != 'yes':
@@ -269,7 +269,7 @@ Examples:
     valid_roles, invalid_roles = validate_roles(role_names, backup_roles)
     
     if invalid_roles:
-        print(f"\n⚠️  WARNING: {len(invalid_roles)} role(s) not found in backup:")
+        print(f"\n  WARNING: {len(invalid_roles)} role(s) not found in backup:")
         for role in invalid_roles:
             print(f"  ✗ {role}")
     
@@ -329,7 +329,7 @@ Examples:
         print(f"Not found in backup: {len(invalid_roles)}")
     
     if args.dry_run:
-        print("\n⚠️  This was a dry run - no actual changes were made")
+        print("\n  This was a dry run - no actual changes were made")
         print("Remove --dry-run to perform the restore")
     
     # Exit code
