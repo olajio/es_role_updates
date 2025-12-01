@@ -2,6 +2,8 @@
 
 ## Quick Start
 
+### Link to Rollback Script: [Rollback Script](https://github.com/olajio/es_role_updates/blob/main/rollback_es_role_update.py)
+
 ### Restore a Single Role
 
 ```bash
