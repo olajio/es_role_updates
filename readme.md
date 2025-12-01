@@ -52,7 +52,6 @@ Change `localhost:9200` to your actual cluster address. Examples:
 - `"https://10.1.2.3:9200"`
 - `"https://my-cluster.us-east-1.aws.found.io:9243"`
 
-If you manage multiple clusters, just make copies of the script with different URLs configured. See the [Multi-Cluster Setup](#multi-cluster-setup) section.
 
 ## Getting an API Key
 
@@ -323,30 +322,6 @@ response = requests.put(
 print(f"Status: {response.status_code}")  # Should be 200
 ```
 
-## Multi-Cluster Setup
-
-If you manage multiple Elasticsearch clusters, make environment-specific copies of the script:
-
-```bash
-# Make copies for each environment
-cp es_role_auto_update.py es_role_auto_update_prod.py
-cp es_role_auto_update.py es_role_auto_update_qa.py
-cp es_role_auto_update.py es_role_auto_update_dev.py
-
-# Edit each one and set the right URL
-# In es_role_auto_update_prod.py:
-#   ELASTICSEARCH_URL = "https://prod_es_url"
-#
-# In es_role_auto_update_qa.py:
-#   ELASTICSEARCH_URL = "https://qa_es_url"
-#
-# And so on...
-
-# Now you can run them separately
-python es_role_auto_update_prod.py --api-key $PROD_KEY
-python es_role_auto_update_qa.py --api-key $QA_KEY
-python es_role_auto_update_dev.py --api-key $DEV_KEY
-```
 
 ## Troubleshooting
 
