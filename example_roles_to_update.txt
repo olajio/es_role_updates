@@ -32,5 +32,3 @@ ELK-PlatEng-730-Role
 
 # TechOps
 ELK-TechOps-798-Role
-
-# Your custom roles go here:
