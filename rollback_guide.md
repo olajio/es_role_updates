@@ -7,7 +7,7 @@
 ```bash
 python es_role_rollback.py \
   --backup backups/roles_backup_20241129_140530.json \
-  --api-key YOUR_API_KEY \
+  --api-key API_KEY \
   --roles Role1
 ```
 
@@ -16,7 +16,7 @@ python es_role_rollback.py \
 ```bash
 python es_role_rollback.py \
   --backup backups/roles_backup_20241129_140530.json \
-  --api-key YOUR_API_KEY \
+  --api-key API_KEY \
   --roles Role1 Role2 Role3
 ```
 
@@ -33,7 +33,7 @@ EOF
 # Restore those roles
 python es_role_rollback.py \
   --backup backups/roles_backup_20241129_140530.json \
-  --api-key YOUR_API_KEY \
+  --api-key API_KEY \
   --role-file roles_to_restore.txt
 ```
 
@@ -42,7 +42,7 @@ python es_role_rollback.py \
 ```bash
 python es_role_rollback.py \
   --backup backups/roles_backup_20241129_140530.json \
-  --api-key YOUR_API_KEY \
+  --api-key API_KEY \
   --roles Role1 \
   --dry-run
 ```
@@ -109,7 +109,7 @@ python es_role_rollback.py \
 
 ```bash
 # This restores EVERYTHING from the backup
-# Use with extreme caution!
+# Use with caution!
 
 python es_role_rollback.py \
   --backup backups/roles_backup_20241129_140530.json \
