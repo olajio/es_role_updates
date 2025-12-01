@@ -104,7 +104,7 @@ python rollback_es_role_update.py \
   --continue-on-error
 ```
 
-### Scenario 3: Restore All Roles (Nuclear Option)
+### Scenario 3: Restore All Roles
 
 ```bash
 # This restores EVERYTHING from the backup
@@ -130,7 +130,7 @@ python rollback_es_role_update.py \
 ELASTICSEARCH ROLE ROLLBACK
 ======================================================================
 
-Elasticsearch URL: https://your-cluster:9200
+Elasticsearch URL: https://es_cluster_url
 Backup file: backups/roles_backup_20241129_140530.json
 
 Testing connection...
