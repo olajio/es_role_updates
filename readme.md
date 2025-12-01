@@ -247,4 +247,4 @@ After running the script:
 
 ## Rolling Back
 
-Every run creates a backup. If something goes wrong, here's how to restore a role:
+Every run creates a backup. If something goes wrong, see the [rollback guide](https://github.com/olajio/es_role_updates/blob/main/rollback_guide.md) for how to restore the original role configuration from the backup.
