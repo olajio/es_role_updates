@@ -8,7 +8,7 @@ Users with access to remote indices like `prod:filebeat-*` or `qa:metrics-*` can
 
 Manually adding these local patterns to dozens or hundreds of roles is tedious and error-prone. This tool does it for you.
 
-## What It Does
+## Script Workflow
 
 The script:
 1. Connects to your Elasticsearch cluster
@@ -44,38 +44,9 @@ Before you run anything, open `es_role_auto_update.py` and set your Elasticsearc
 
 ```python
 # Look for this around line 23
-ELASTICSEARCH_URL = "https://localhost:9200"
+ELASTICSEARCH_URL = "https://es_cluster_url"
 ```
 
-Change `localhost:9200` to your actual cluster address. Examples:
-- `"https://prod-es.company.com:9200"`
-- `"https://10.1.2.3:9200"`
-- `"https://my-cluster.us-east-1.aws.found.io:9243"`
-
-
-## Getting an API Key
-
-You need an API key that can manage roles. Run this in Kibana Dev Tools:
-
-```
-POST /_security/api_key
-{
-  "name": "role-manager-key",
-  "role_descriptors": {
-    "role-manager": {
-      "cluster": ["manage_security"],
-      "indices": [
-        {
-          "names": ["*"],
-          "privileges": ["read", "monitor"]
-        }
-      ]
-    }
-  }
-}
-```
-
-Save the key as you won't be able to retrieve it after the first time the key is displayed.
 
 ## Usage
 
@@ -119,7 +90,7 @@ python es_role_auto_update.py --api-key API_KEY --role-file roles.txt
 
 See `example_roles_to_update.txt` for an example file with comments.
 
-### Just Generate a Report
+### Generate a Report roles to update only
 
 Want to see what needs updating without changing anything?
 
@@ -159,7 +130,7 @@ python es_role_auto_update.py --api-key $API_KEY --dry-run
 
 # Step 4: Read the output carefully validate that it all make sense. It is recommended to run this script on a test role before applying it to all the other roles in the production environment
 
-# Step 5: If yes, do it
+# Step 5: If yes, run the script
 python es_role_auto_update.py --api-key $API_KEY
 
 # Step 6: Check the logs
@@ -178,27 +149,13 @@ python es_role_auto_update.py \
   --roles new-role-1 new-role-2 new-role-3
 ```
 
-### Example 3: Something's Not Right with One Role
-
-```bash
-# Turn on debug logging and force an update
-python es_role_auto_update.py \
-  --api-key $API_KEY \
-  --roles problematic-role \
-  --log-level DEBUG \
-  --force
-
-# Check what happened
-cat logs/role_auto_update_*.log | grep -A 5 "problematic-role"
-```
-
 ## Understanding the Output
 
 When you run the script, you'll see output like this:
 
 ```
 INFO - Elasticsearch Role Auto-Updater
-INFO - Elasticsearch URL: https://es_cluster_url:9200
+INFO - Elasticsearch URL: https://es_cluster_url
 INFO - Testing connection to Elasticsearch...
 INFO - Successfully connected to Elasticsearch: 8.11.0
 INFO - Retrieving all roles...
@@ -291,33 +248,3 @@ After running the script:
 ## Rolling Back
 
 Every run creates a backup. If something goes wrong, here's how to restore a role:
-
-```python
-import json
-import requests
-
-# Load the backup file
-with open('backups/roles_backup_20241129_140530.json', 'r') as f:
-    roles = json.load(f)
-
-# Get the role you want to restore
-role_name = 'Role1'
-role_def = roles[role_name]
-
-# Clean out the metadata fields that shouldn't be in the update
-clean_def = {k: v for k, v in role_def.items() 
-            if k not in ['_reserved', '_deprecated', '_deprecated_reason']}
-
-# Put it back
-response = requests.put(
-    f'https://es_cluster_url:9200/_security/role/{role_name}',
-    headers={
-        'Authorization': f'ApiKey YOUR_API_KEY',
-        'Content-Type': 'application/json'
-    },
-    json=clean_def,
-    verify=False  # only if you have SSL issues
-)
-
-print(f"Status: {response.status_code}")  # Should be 200
-```
