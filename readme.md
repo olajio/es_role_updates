@@ -11,11 +11,12 @@ Manually adding these local patterns to dozens or hundreds of roles is tedious a
 ## Script Workflow
 
 The script:
-1. Connects to your Elasticsearch cluster
-2. Finds all roles with remote index access patterns (anything with `:` in the pattern)
-3. Figures out what local patterns are needed
-4. Adds those local patterns to the roles
-5. Creates backups and logs everything along the way
+1. Connects to the Elasticsearch cluster
+2. Finds all roles with remote index access patterns (anything with `:` in the pattern. For example, `prod:filebeat-*`)
+3. Creates backup of the roles
+4. Figures out what corresponsding local patterns are needed (For example, `filebeat-*`)
+5. Adds those local patterns to the roles
+6. Logs everything along the way
 
 It's smart about comma-separated patterns too - if you have `prod:traces-apm*,prod:logs-apm*,prod:metrics-apm*`, it converts that to `traces-apm*,logs-apm*,metrics-apm*` while preserving the order so you can easily verify it worked.
 
@@ -24,12 +25,11 @@ It's smart about comma-separated patterns too - if you have `prod:traces-apm*,pr
 - Python 3.8 or newer
 - The `requests` library (`pip install requests`)
 - An Elasticsearch API key with `manage_security` privilege
-- Network access to your Elasticsearch cluster
 
 ## Installation
 
 ```bash
-# Get the files (download from your repo/shared drive/wherever)
+# Get the script files (download from this repo)
 # You need: es_role_auto_update.py and es_role_manager_utils.py
 
 # Install the dependency
@@ -40,10 +40,10 @@ pip install requests
 
 ## Configuration
 
-Before you run anything, open `es_role_auto_update.py` and set your Elasticsearch URL:
+Before you run anything, open `es_role_auto_update.py` and set the Elasticsearch URL:
 
 ```python
-# Look for this around line 23
+# Look for this around line 31
 ELASTICSEARCH_URL = "https://es_cluster_url"
 ```
 
@@ -120,18 +120,18 @@ Here are the flags you'll use most often:
 
 ```bash
 # Step 1: See what's out there
-python es_role_auto_update.py --api-key $API_KEY --report-only
+python es_role_auto_update.py --api-key API_KEY --report-only
 
 # Step 2: Review the report
 cat logs/role_update_report_*.json
 
 # Step 3: Test run to see what would happen
-python es_role_auto_update.py --api-key $API_KEY --dry-run
+python es_role_auto_update.py --api-key API_KEY --dry-run
 
 # Step 4: Read the output carefully validate that it all make sense. It is recommended to run this script on a test role before applying it to all the other roles in the production environment
 
 # Step 5: If yes, run the script
-python es_role_auto_update.py --api-key $API_KEY
+python es_role_auto_update.py --api-key API_KEY
 
 # Step 6: Check the logs
 tail -100 logs/role_auto_update_*.log
@@ -141,11 +141,11 @@ tail -100 logs/role_auto_update_*.log
 
 ```bash
 # See if the new roles need updating
-python es_role_auto_update.py --api-key $API_KEY --report-only
+python es_role_auto_update.py --api-key API_KEY --report-only
 
 # Update just those specific roles
 python es_role_auto_update.py \
-  --api-key $API_KEY \
+  --api-key API_KEY \
   --roles new-role-1 new-role-2 new-role-3
 ```
 
