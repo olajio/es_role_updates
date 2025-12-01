@@ -69,7 +69,6 @@ Optional:
 Before running, edit the script and set your Elasticsearch URL:
 
 ```python
-# Around line 34 in rollback_es_role_update.py
 ELASTICSEARCH_URL = "https://localhost:9200"
 ```
 
