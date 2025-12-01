@@ -12,8 +12,6 @@ You'll need:
 ```bash
 # Install the required library
 pip install requests
-
-# That's it - you're ready to go
 ```
 
 ## Configuration
@@ -21,7 +19,6 @@ pip install requests
 **Important:** Before running the script, edit `es_role_auto_update.py` and set your Elasticsearch URL:
 
 ```python
-# Around line 23 in es_role_auto_update.py
 ELASTICSEARCH_URL = "https://es_cluster_url:9200"  # Change this to the actual cluster URL
 ```
 
@@ -54,7 +51,7 @@ python es_role_auto_update.py \
   --roles ELK-Dev-600-Role elastic_rw_file \
   --dry-run
 
-# Looks good? Run it
+# Actually update roles
 python es_role_auto_update.py \
   --api-key API_KEY \
   --roles ELK-Dev-600-Role elastic_rw_file
@@ -200,5 +197,4 @@ In Kibana:
 
 Every time the script runs, it creates a backup. To restore a role, run the [rollback_es_role_update.py script](https://github.com/olajio/es_role_updates/blob/main/rollback_es_role_update.py)
 
-
-For more details, check out the full README.md.
+For more details, check out the full [README.md](https://github.com/olajio/es_role_updates/blob/main/readme.md).
