@@ -1,6 +1,9 @@
 import json
 import requests
 
+# Elasticsearch cluster endpoint
+ELASTICSEARCH_URL = "https://es_cluster_url"
+
 # Load the backup file
 with open('backups/roles_backup_20241129_140530.json', 'r') as f:
     roles = json.load(f)
@@ -15,7 +18,7 @@ clean_def = {k: v for k, v in role_def.items()
 
 # Put it back
 response = requests.put(
-    f'https://es_cluster_url:9200/_security/role/{role_name}',
+    f'{ELASTICSEARCH_URL}/_security/role/{role_name}',
     headers={
         'Authorization': f'ApiKey YOUR_API_KEY',
         'Content-Type': 'application/json'
