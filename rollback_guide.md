@@ -5,7 +5,7 @@
 ### Restore a Single Role
 
 ```bash
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key API_KEY \
   --roles Role1
@@ -14,7 +14,7 @@ python es_role_rollback.py \
 ### Restore Multiple Roles
 
 ```bash
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key API_KEY \
   --roles Role1 Role2 Role3
@@ -25,13 +25,13 @@ python es_role_rollback.py \
 ```bash
 # Create a file with role names
 cat > roles_to_restore.txt << EOF
-ELK-Dev-600-Role
-elastic_rw_file
-ELK-AppSupport-GL-290-Role
+Role1
+Role2
+Role4
 EOF
 
 # Restore those roles
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key API_KEY \
   --role-file roles_to_restore.txt
@@ -40,7 +40,7 @@ python es_role_rollback.py \
 ### Dry Run (Test Before Restoring)
 
 ```bash
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key API_KEY \
   --roles Role1 \
@@ -69,7 +69,7 @@ Optional:
 Before running, edit the script and set your Elasticsearch URL:
 
 ```python
-# Around line 34 in es_role_rollback.py
+# Around line 34 in rollback_es_role_update.py
 ELASTICSEARCH_URL = "https://localhost:9200"
 ```
 
@@ -82,26 +82,26 @@ ELASTICSEARCH_URL = "https://localhost:9200"
 ls -lt backups/
 
 # Dry run to see what would be restored
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key $API_KEY \
-  --roles ELK-Dev-600-Role \
+  --roles Role1 \
   --dry-run
 
 # If it looks good, restore it
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key $API_KEY \
-  --roles ELK-Dev-600-Role
+  --roles Role1
 ```
 
 ### Scenario 2: Restore Multiple Roles That Got Messed Up
 
 ```bash
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key $API_KEY \
-  --roles ELK-Dev-600-Role ELK-PPM-690-Role elastic_rw_file \
+  --roles Role1 Role3 Role2 \
   --continue-on-error
 ```
 
@@ -111,14 +111,14 @@ python es_role_rollback.py \
 # This restores EVERYTHING from the backup
 # Use with caution!
 
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key $API_KEY \
   --all \
   --dry-run
 
 # If you're really sure...
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup backups/roles_backup_20241129_140530.json \
   --api-key $API_KEY \
   --all
@@ -145,9 +145,9 @@ Loading backup file...
 Validating 3 role(s)...
 
 Roles to restore: 3
-  • ELK-Dev-600-Role
-  • elastic_rw_file
-  • ELK-PPM-690-Role
+  • Role1
+  • Role2
+  • Role3
 
 Proceed with restore? (yes/no): yes
 
@@ -155,14 +155,14 @@ Proceed with restore? (yes/no): yes
 RESTORING ROLES
 ======================================================================
 
-[1/3] Restoring: ELK-Dev-600-Role
-✓ Successfully restored: ELK-Dev-600-Role
+[1/3] Restoring: Role1
+✓ Successfully restored: Role1
 
-[2/3] Restoring: elastic_rw_file
-✓ Successfully restored: elastic_rw_file
+[2/3] Restoring: Role2
+✓ Successfully restored: Role2
 
-[3/3] Restoring: ELK-PPM-690-Role
-✓ Successfully restored: ELK-PPM-690-Role
+[3/3] Restoring: Role3
+✓ Successfully restored: Role3
 
 ======================================================================
 SUMMARY
@@ -181,12 +181,12 @@ When using `--role-file`, the file should have one role name per line:
 # roles_to_restore.txt
 # Lines starting with # are comments
 
-ELK-Dev-600-Role
-elastic_rw_file
-ELK-AppSupport-GL-290-Role
+Role1
+Role2
+Role4
 
 # You can add comments anywhere
-ELK-PPM-690-Role
+Role3
 ```
 
 ## Safety Features
@@ -206,7 +206,7 @@ ELK-PPM-690-Role
 ls -l backups/roles_backup_20241129_140530.json
 
 # Use absolute path if needed
-python es_role_rollback.py \
+python rollback_es_role_update.py \
   --backup /full/path/to/backups/roles_backup_20241129_140530.json \
   --api-key $API_KEY \
   --roles Role1
@@ -257,7 +257,7 @@ After restoring:
 3. **Check the role via API**
    ```bash
    curl -H "Authorization: ApiKey YOUR_KEY" \
-        https://cluster:9200/_security/role/ELK-Dev-600-Role
+        https://cluster:9200/_security/role/Role1
    ```
 
 ## Multiple Clusters
@@ -266,8 +266,8 @@ Like the update script, just make copies for each environment:
 
 ```bash
 # Create environment-specific copies
-cp es_role_rollback.py es_role_rollback_prod.py
-cp es_role_rollback.py es_role_rollback_qa.py
+cp rollback_es_role_update.py es_role_rollback_prod.py
+cp rollback_es_role_update.py es_role_rollback_qa.py
 
 # Edit each with the right URL
 # Then use:
@@ -296,5 +296,5 @@ python es_role_rollback_qa.py --backup backups/qa_backup.json --api-key $QA_KEY 
 
 ```bash
 # Show all options
-python es_role_rollback.py --help
+python rollback_es_role_update.py --help
 ```
