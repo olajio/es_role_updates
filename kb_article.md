@@ -81,9 +81,9 @@ This enables CSV generation while maintaining all existing remote access capabil
 
 ### Design Principles
 
-1. **Safety First**: Automatic backups, dry-run mode, verification steps
+1. **Safe Role Update**: Automatic backups, dry-run mode, verification steps
 2. **Idempotent**: Can be run multiple times safely without creating duplicates
-3. **Transparent**: Detailed logging of all operations
+3. **Logging**: Detailed logging of all operations
 4. **Flexible**: Supports multiple update modes and scenarios
 5. **Recoverable**: Built-in rollback capabilities
 
@@ -197,7 +197,7 @@ This enables CSV generation while maintaining all existing remote access capabil
 
 ### Supporting Files
 
-#### example_roles_to_update.txt
+#### roles.txt
 Template file showing role list format for selective updates
 
 #### requirements.txt
@@ -266,7 +266,7 @@ ls -1
 es_role_auto_update.py
 es_role_manager_utils.py
 rollback_es_role_update.py.py
-example_roles_to_update.txt
+roles.txt
 README.md
 QUICK_START.md
 ROLLBACK_GUIDE.md
