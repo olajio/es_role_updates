@@ -230,69 +230,6 @@ Python dependencies (currently just `requests`)
 
 ---
 
-## Requirements
-
-### System Requirements
-
-- **Python Version**: 3.8 or higher
-- **Operating System**: Linux, macOS, or Windows with Python
-- **Network**: HTTP/HTTPS access to Elasticsearch cluster
-- **Disk Space**: Minimal (backups typically < 10MB)
-
-### Elasticsearch Requirements
-
-- **Version**: 7.x or 8.x
-- **Cluster Type**: Cross-Cluster Search (CCS) configuration
-- **API Access**: HTTPS endpoint accessible
-- **Authentication**: API key with appropriate privileges
-
-### API Key Requirements
-
-The API key must have the following privileges:
-
-```json
-{
-  "cluster": ["manage_security"],
-  "indices": [
-    {
-      "names": ["*"],
-      "privileges": ["read", "monitor"]
-    }
-  ]
-}
-```
-
-**Creating the API Key:**
-
-Via Kibana Dev Tools:
-```
-POST /_security/api_key
-{
-  "name": "role-manager-key",
-  "role_descriptors": {
-    "role-manager": {
-      "cluster": ["manage_security"],
-      "indices": [
-        {
-          "names": ["*"],
-          "privileges": ["read", "monitor"]
-        }
-      ]
-    }
-  }
-}
-```
-
-**Important**: Save the returned API key securely. It cannot be retrieved later.
-
-### Python Dependencies
-
-```bash
-pip install requests
-```
-
----
-
 ## Installation & Setup
 
 ### Step 1: Obtain the Scripts
@@ -335,30 +272,7 @@ QUICK_START.md
 ROLLBACK_GUIDE.md
 ```
 
-### Step 4: Test Python Version
-
-```bash
-python --version
-# Should show 3.8 or higher
-```
-
----
-
 ## Configuration
-
-### Primary Configuration: Elasticsearch URL
-
-**Location:** Inside each Python script (lines 20-25 typically)
-
-**What to Configure:**
-
-```python
-# In es_role_auto_update.py
-ELASTICSEARCH_URL = "https://localhost:9200"
-
-# In rollback_es_role_update.py.py
-ELASTICSEARCH_URL = "https://localhost:9200"
-```
 
 ### Directory Structure
 
@@ -406,7 +320,7 @@ python es_role_auto_update.py --api-key KEY --roles Role1 Role2
 python es_role_auto_update.py --api-key KEY --role-file roles.txt
 ```
 
-### Detailed Usage Scenarios
+### Usage Scenarios
 
 #### Scenario 1: First-Time Production Deployment
 
@@ -547,7 +461,7 @@ Log file: logs/role_auto_update_20241129_140530.log
 
 ---
 
-## Usage - Role Rollback
+## Usage - Rollback Role Update
 
 ### Quick Reference
 
