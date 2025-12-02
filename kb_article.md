@@ -1,10 +1,4 @@
-# Elasticsearch Role Auto-Updater - Internal Knowledge Base Article
-
-**Document ID:** ES-TOOLS-001  
-**Last Updated:** November 2024  
-**Maintained By:** Platform Engineering / Elasticsearch Team  
-**Status:** Production Ready
-
+# Elasticsearch Role Auto-Updater
 ---
 
 ## Table of Contents
