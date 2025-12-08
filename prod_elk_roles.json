@@ -1350,3 +1350,49 @@
     }
   }
 }
+# 34: GET _security/role/Test-ELK-Role 200 OK
+{
+  "Test-ELK-Role": {
+    "cluster": [],
+    "indices": [
+      {
+        "names": [
+          "metricbeat-*",
+          "filebeat-*",
+          "apm-*",
+          "heartbeat-*",
+          "metrics-apm*",
+          "logs-apm*",
+          "traces-apm*",
+          "user-info",
+          "cost*",
+          "file_perf_tracker*",
+          "winlogbeat-*",
+          "restored-filebeat-*",
+          "partial-*filebeat-*",
+          "sonic-*",
+          "aws-hedgeserv-log-lz-us-east-2-s3-cloudwatch-logs-*",
+          "traces-apm*,apm-*,logs-apm*,apm-*,metrics-apm*,apm-*"
+        ],
+        "privileges": [
+          "view_index_metadata",
+          "read",
+          "read_cross_cluster"
+        ],
+        "field_security": {
+          "grant": [
+            "*"
+          ],
+          "except": []
+        },
+        "allow_restricted_indices": false
+      }
+    ],
+    "applications": [],
+    "run_as": [],
+    "metadata": {},
+    "transient_metadata": {
+      "enabled": true
+    }
+  }
+}
