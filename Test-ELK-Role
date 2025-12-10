@@ -1,0 +1,44 @@
+{
+  "Test-ELK-Role": {
+    "cluster": [],
+    "indices": [
+      {
+        "names": [
+          "sdp_amdb*",
+          ".watches*",
+          "filebeat-*",
+          "apm-*",
+          "heartbeat-*",
+          "metrics-apm*",
+          "logs-apm*",
+          "traces-apm*",
+          "user-info",
+          "file_perf_tracker*",
+          "winlogbeat-*",
+          "restored-filebeat-*",
+          "partial-*filebeat-*",
+          "sdp_tickets*",
+          "aws-hedgeserv-log-lz-us-east-2-s3-cloudwatch-logs-*"
+        ],
+        "privileges": [
+          "view_index_metadata",
+          "read",
+          "read_cross_cluster"
+        ],
+        "field_security": {
+          "grant": [
+            "*"
+          ],
+          "except": []
+        },
+        "allow_restricted_indices": false
+      }
+    ],
+    "applications": [],
+    "run_as": [],
+    "metadata": {},
+    "transient_metadata": {
+      "enabled": true
+    }
+  }
+}
