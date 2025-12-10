@@ -1,0 +1,14 @@
+{
+  "prod": {
+    "url": "https://prod-elasticsearch:9200",
+    "api_key": "YOUR_PROD_API_KEY_HERE",
+    "verify_ssl": false,
+    "description": "Production Elasticsearch cluster"
+  },
+  "ccs": {
+    "url": "https://ccs-elasticsearch:9200",
+    "api_key": "YOUR_CCS_API_KEY_HERE",
+    "verify_ssl": false,
+    "description": "Cross-Cluster Search Elasticsearch cluster"
+  }
+}
