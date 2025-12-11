@@ -88,25 +88,25 @@ Create a JSON configuration file with all your cluster credentials:
   "clusters": {
     "prod": {
       "url": "https://prod-elasticsearch.example.com:9200",
-      "api_key": "your-prod-api-key-here",
+      "api_key": "PROD_API_KEY,
       "verify_ssl": false,
       "description": "Production Elasticsearch cluster"
     },
     "qa": {
       "url": "https://qa-elasticsearch.example.com:9200",
-      "api_key": "your-qa-api-key-here",
+      "api_key": "QA_API_KEY",
       "verify_ssl": false,
       "description": "QA Elasticsearch cluster"
     },
     "dev": {
       "url": "https://dev-elasticsearch.example.com:9200",
-      "api_key": "your-dev-api-key-here",
+      "api_key": "DEV_API_KEY",
       "verify_ssl": false,
       "description": "Development Elasticsearch cluster"
     },
     "ccs": {
       "url": "https://ccs-elasticsearch.example.com:9200",
-      "api_key": "your-ccs-api-key-here",
+      "api_key": "CCS_API_KEY",
       "verify_ssl": false,
       "description": "Cross-Cluster Search Elasticsearch cluster"
     }
