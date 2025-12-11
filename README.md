@@ -88,7 +88,7 @@ Create a JSON configuration file with all your cluster credentials:
   "clusters": {
     "prod": {
       "url": "https://prod-elasticsearch.example.com:9200",
-      "api_key": "PROD_API_KEY,
+      "api_key": "PROD_API_KEY",
       "verify_ssl": false,
       "description": "Production Elasticsearch cluster"
     },
