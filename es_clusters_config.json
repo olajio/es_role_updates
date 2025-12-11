@@ -27,7 +27,7 @@
   },
   "defaults": {
     "inject_patterns": ["partial-*", "restored-*"],
-    "source_clusters": ["prod", "qa", "dev"],
+    "remote_clusters": ["prod", "qa", "dev"],
     "ccs_cluster": "ccs"
   }
 }
