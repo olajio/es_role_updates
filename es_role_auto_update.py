@@ -100,7 +100,7 @@ Config file format (es_clusters_config.json):
     },
     "defaults": {
       "inject_patterns": ["partial-*", "restored-*"],
-      "source_clusters": ["prod", "qa", "dev"],
+      "remote_clusters": ["prod", "qa", "dev"],
       "ccs_cluster": "ccs"
     }
   }
@@ -250,7 +250,7 @@ def load_config(config_path: Path) -> Dict:
             'clusters': {},
             'defaults': {
                 'inject_patterns': list(DEFAULT_INJECT_PATTERNS),
-                'source_clusters': [],
+                'remote_clusters': [],
                 'ccs_cluster': None
             }
         }
@@ -260,7 +260,7 @@ def load_config(config_path: Path) -> Dict:
                 if key == 'ccs':
                     new_config['defaults']['ccs_cluster'] = key
                 else:
-                    new_config['defaults']['source_clusters'].append(key)
+                    new_config['defaults']['remote_clusters'].append(key)
         config = new_config
     
     # Validate clusters exist
@@ -295,8 +295,8 @@ def list_clusters(config: Dict):
     if 'defaults' in config:
         print("Default settings:")
         defaults = config['defaults']
-        if defaults.get('source_clusters'):
-            print(f"  Source clusters: {', '.join(defaults['source_clusters'])}")
+        if defaults.get('remote_clusters'):
+            print(f"  Source clusters: {', '.join(defaults['remote_clusters'])}")
         if defaults.get('ccs_cluster'):
             print(f"  CCS cluster: {defaults['ccs_cluster']}")
         if defaults.get('inject_patterns'):
@@ -512,7 +512,7 @@ def generate_report(
     ccs_updates: Dict[str, Dict],
     output_file: Path,
     inject_patterns: Set[str],
-    source_clusters: List[str],
+    remote_clusters: List[str],
     ccs_cluster: str
 ):
     """Generate a detailed JSON report"""
@@ -520,11 +520,11 @@ def generate_report(
         'timestamp': datetime.now().isoformat(),
         'config': {
             'inject_patterns': sorted(list(inject_patterns)),
-            'source_clusters': source_clusters,
+            'remote_clusters': remote_clusters,
             'ccs_cluster': ccs_cluster
         },
         'summary': {
-            'source_clusters_updated': {
+            'remote_clusters_updated': {
                 cluster: len(updates) for cluster, updates in source_updates.items()
             },
             'ccs_roles_to_update': len(ccs_updates)
@@ -573,7 +573,7 @@ def print_summary(
     skip_source: bool,
     skip_ccs: bool,
     inject_patterns: Set[str],
-    source_clusters: List[str],
+    remote_clusters: List[str],
     ccs_cluster: str
 ):
     """Print summary of operations"""
@@ -587,11 +587,11 @@ def print_summary(
         logger.info("Mode: DRY RUN (no changes made)")
     
     logger.info(f"\nRequired patterns: {', '.join(sorted(inject_patterns))}")
-    logger.info(f"Source clusters: {', '.join(source_clusters)}")
+    logger.info(f"Source clusters: {', '.join(remote_clusters)}")
     logger.info(f"CCS cluster: {ccs_cluster}")
     
     # Source Cluster Summaries
-    for cluster_name in source_clusters:
+    for cluster_name in remote_clusters:
         logger.info(f"\n--- {cluster_name.upper()} CLUSTER ---")
         if skip_source:
             logger.info("  SKIPPED")
@@ -671,13 +671,13 @@ def main():
         defaults = config.get('defaults', {})
         
         # Determine source clusters
-        source_clusters = args.source_clusters or defaults.get('source_clusters', [])
-        if not source_clusters and not args.skip_source:
+        remote_clusters = args.remote_clusters or defaults.get('remote_clusters', [])
+        if not remote_clusters and not args.skip_source:
             logger.error("No source clusters specified. Use --source-clusters or set defaults in config.")
             return 1
         
         # Validate source clusters exist
-        for cluster in source_clusters:
+        for cluster in remote_clusters:
             if cluster not in config['clusters']:
                 logger.error(f"Source cluster '{cluster}' not found in configuration.")
                 logger.error(f"Available clusters: {', '.join(config['clusters'].keys())}")
@@ -705,7 +705,7 @@ def main():
                 inject_patterns.update(DEFAULT_INJECT_PATTERNS)
         
         logger.info(f"\nPatterns to inject: {', '.join(sorted(inject_patterns)) if inject_patterns else 'NONE'}")
-        logger.info(f"Source clusters: {', '.join(source_clusters)}")
+        logger.info(f"Source clusters: {', '.join(remote_clusters)}")
         logger.info(f"CCS cluster: {ccs_cluster if not args.skip_ccs else 'SKIPPED'}")
         logger.info(f"Update sources: {'SKIP' if args.skip_source else 'YES'}")
         logger.info(f"Update CCS: {'SKIP' if args.skip_ccs else 'YES'}")
@@ -736,7 +736,7 @@ def main():
         
         # Connect to source clusters
         if not args.skip_source or not args.skip_ccs:
-            for cluster_name in source_clusters:
+            for cluster_name in remote_clusters:
                 cluster_config = config['clusters'][cluster_name]
                 logger.info(f"\nConnecting to {cluster_name.upper()} cluster...")
                 
@@ -811,7 +811,7 @@ def main():
             
             # Check in source clusters
             if not args.skip_source:
-                for cluster_name in source_clusters:
+                for cluster_name in remote_clusters:
                     if role_name not in source_all_roles.get(cluster_name, {}):
                         logger.warning(f"Role not found in {cluster_name}: {role_name}")
                         invalid_roles.append(f"{role_name} (not in {cluster_name})")
@@ -864,7 +864,7 @@ def main():
         logger.info("ANALYZING ROLES")
         logger.info("-"*70)
         
-        source_updates = {cluster: {} for cluster in source_clusters}  # cluster -> {role -> info}
+        source_updates = {cluster: {} for cluster in remote_clusters}  # cluster -> {role -> info}
         ccs_updates = {}  # role -> info
         
         for role_name in valid_roles:
@@ -872,7 +872,7 @@ def main():
             
             # Analyze source cluster roles
             if not args.skip_source:
-                for cluster_name in source_clusters:
+                for cluster_name in remote_clusters:
                     if role_name in source_all_roles.get(cluster_name, {}):
                         role_def = source_all_roles[cluster_name][role_name]
                         needs_update, patterns_to_add = analyze_role_for_injection(
@@ -890,7 +890,7 @@ def main():
                 
                 # Get source role definitions for sync
                 source_role_defs = {}
-                for cluster_name in source_clusters:
+                for cluster_name in remote_clusters:
                     source_role_defs[cluster_name] = source_all_roles.get(cluster_name, {}).get(role_name)
                 
                 analysis = analyze_ccs_role_for_sync(
@@ -916,12 +916,12 @@ def main():
             print_summary(
                 source_updates, ccs_updates, {}, {},
                 args.dry_run, args.skip_source, args.skip_ccs,
-                inject_patterns, source_clusters, ccs_cluster or "N/A"
+                inject_patterns, remote_clusters, ccs_cluster or "N/A"
             )
             return 0
         
         logger.info(f"\nRoles needing updates:")
-        for cluster_name in source_clusters:
+        for cluster_name in remote_clusters:
             logger.info(f"  {cluster_name.upper()}: {len(source_updates.get(cluster_name, {}))}")
         if ccs_cluster:
             logger.info(f"  {ccs_cluster.upper()} (CCS): {len(ccs_updates)}")
@@ -930,7 +930,7 @@ def main():
         report_file = args.log_dir / f'role_update_report_{timestamp}.json'
         generate_report(
             source_updates, ccs_updates, report_file,
-            inject_patterns, source_clusters, ccs_cluster or "N/A"
+            inject_patterns, remote_clusters, ccs_cluster or "N/A"
         )
         logger.info(f"Report saved to: {report_file}")
         
@@ -940,7 +940,7 @@ def main():
             print_summary(
                 source_updates, ccs_updates, {}, {},
                 True, args.skip_source, args.skip_ccs,
-                inject_patterns, source_clusters, ccs_cluster or "N/A"
+                inject_patterns, remote_clusters, ccs_cluster or "N/A"
             )
             return 0
         
@@ -949,12 +949,12 @@ def main():
         logger.info("UPDATING ROLES")
         logger.info("="*70)
         
-        source_results = {cluster: {} for cluster in source_clusters}
+        source_results = {cluster: {} for cluster in remote_clusters}
         ccs_results = {}
         
         # Update source cluster roles
         if not args.skip_source:
-            for cluster_name in source_clusters:
+            for cluster_name in remote_clusters:
                 updates = source_updates.get(cluster_name, {})
                 if not updates:
                     continue
@@ -998,7 +998,7 @@ def main():
             source_updates, ccs_updates,
             source_results, ccs_results,
             args.dry_run, args.skip_source, args.skip_ccs,
-            inject_patterns, source_clusters, ccs_cluster or "N/A"
+            inject_patterns, remote_clusters, ccs_cluster or "N/A"
         )
         
         # Return appropriate exit code
