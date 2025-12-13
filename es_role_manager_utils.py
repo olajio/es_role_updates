@@ -520,45 +520,49 @@ class ElasticsearchRoleManager:
         self,
         role_definition: Dict,
         privileges: Set[str],
-        spaces: Set[str]
+        spaces: Set[str] = None  # spaces parameter kept for API compatibility but not used
     ) -> Dict:
         """
-        Add Kibana privileges to a role for specified spaces
+        Add Kibana privileges to a role by merging into each existing Kibana application entry
         
         Args:
             role_definition: Original role definition
             privileges: Set of privileges to add 
                        (e.g., {'feature_discover.all', 'feature_dashboard.all', 'feature_visualize.all'})
-            spaces: Set of spaces to apply privileges to
+            spaces: Not used - privileges are added to ALL existing Kibana entries
             
         Returns:
-            Updated role definition
+            Updated role definition with privileges merged into each Kibana application entry
         """
         # Create a deep copy to avoid modifying the original
         updated_role = json.loads(json.dumps(role_definition))
         
         if not updated_role.get('applications'):
-            updated_role['applications'] = []
+            self.logger.debug("No applications section found, nothing to update")
+            return updated_role
         
-        # Determine the Kibana application name from existing entries, or use default
-        kibana_app = 'kibana-.kibana'
-        for app_entry in updated_role.get('applications', []):
+        entries_updated = 0
+        
+        # Iterate through each application entry and merge privileges into Kibana entries
+        for app_entry in updated_role['applications']:
+            # Only process Kibana application entries
             if app_entry.get('application', '').startswith('kibana'):
-                kibana_app = app_entry['application']
-                break
+                existing_privileges = set(app_entry.get('privileges', []))
+                
+                # Find which privileges are missing from this entry
+                missing_privileges = privileges - existing_privileges
+                
+                if missing_privileges:
+                    # Merge new privileges into existing privileges list
+                    merged_privileges = existing_privileges | privileges
+                    app_entry['privileges'] = sorted(list(merged_privileges))
+                    entries_updated += 1
+                    
+                    self.logger.debug(
+                        f"Merged {len(missing_privileges)} privileges into entry with resources: {app_entry.get('resources', [])}"
+                    )
         
-        # Add new entry with the required privileges for all spaces
-        new_entry = {
-            'application': kibana_app,
-            'privileges': sorted(list(privileges)),
-            'resources': sorted(list(spaces))
-        }
-        
-        updated_role['applications'].append(new_entry)
-        
-        self.logger.debug(
-            f"Added Kibana privileges {privileges} for spaces {spaces}"
-        )
+        self.logger.debug(f"Updated {entries_updated} Kibana application entries")
         
         return updated_role
 
