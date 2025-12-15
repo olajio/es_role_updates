@@ -1,0 +1,147 @@
+{
+    "cluster": [],
+    "indices": [
+      {
+        "names": [
+          "sdp_amdb",
+          "sdp_tickets",
+          ".watcher-history-*",
+          "prod:file_perf_tracker*",
+          "aqrc_jobs",
+          "workflow_job_tracker*",
+          "partial-restored-*",
+          "restored-*",
+          "sonic-*",
+          "traces-apm*",
+          "aws-hedgeserv-log-lz-us-east-2-s3-cloudwatch-logs-*",
+          "metricbeat-*",
+          "partial-*",
+          "metrics-apm*",
+          "aws-hedgeserv-log-lz-us-east-2-s3-cloudtrail-logs-*",
+          "heartbeat-*",
+          "apm-*",
+          "logs-apm*",
+          "filebeat-*"
+        ],
+        "privileges": [
+          "view_index_metadata",
+          "read",
+          "read_cross_cluster"
+        ],
+        "field_security": {
+          "grant": [
+            "*"
+          ],
+          "except": []
+        },
+        "allow_restricted_indices": false
+      },
+      {
+        "names": [
+          "file_perf_tracker*"
+        ],
+        "privileges": [
+          "view_index_metadata",
+          "read",
+          "read_cross_cluster"
+        ],
+        "field_security": {
+          "grant": [
+            "*"
+          ],
+          "except": []
+        },
+        "allow_restricted_indices": false
+      }
+    ],
+    "applications": [
+      {
+        "application": "kibana-.kibana",
+        "privileges": [
+          "feature_discover.all",
+          "feature_dashboard.all",
+          "feature_canvas.all",
+          "feature_maps.all",
+          "feature_ml.read",
+          "feature_graph.all",
+          "feature_visualize.all",
+          "feature_dev_tools.read",
+          "feature_savedObjectsTagging.all",
+          "feature_logs.read",
+          "feature_infrastructure.read",
+          "feature_apm.read",
+          "feature_uptime.read",
+          "feature_savedObjectsManagement.read"
+        ],
+        "resources": [
+          "space:appsupport"
+        ]
+      },
+      {
+        "application": "kibana-.kibana",
+        "privileges": [
+          "feature_apm.read",
+          "feature_canvas.read",
+          "feature_dashboard.all",
+          "feature_discover.all",
+          "feature_graph.read",
+          "feature_maps.read",
+          "feature_ml.read",
+          "feature_savedObjectsManagement.read",
+          "feature_visualize.all"
+        ],
+        "resources": [
+          "space:information-technology"
+        ]
+      },
+      {
+        "application": "kibana-.kibana",
+        "privileges": [
+          "feature_dashboard.all",
+          "feature_discover.all",
+          "feature_visualize.all",
+          "space_read"
+        ],
+        "resources": [
+          "space:caviar"
+        ]
+      },
+      {
+        "application": "kibana-.kibana",
+        "privileges": [
+          "feature_advancedSettings.read",
+          "feature_apm.read",
+          "feature_canvas.read",
+          "feature_dashboard.all",
+          "feature_dev_tools.read",
+          "feature_discover.all",
+          "feature_filesManagement.read",
+          "feature_filesSharedImage.read",
+          "feature_graph.read",
+          "feature_indexPatterns.read",
+          "feature_infrastructure.read",
+          "feature_logs.read",
+          "feature_maps.read",
+          "feature_ml.read",
+          "feature_osquery.read",
+          "feature_profiling.read",
+          "feature_savedObjectsManagement.read",
+          "feature_savedObjectsTagging.read",
+          "feature_slo.read",
+          "feature_uptime.read",
+          "feature_visualize.all"
+        ],
+        "resources": [
+          "space:checklist",
+          "space:hs-dev-reconconsole2",
+          "space:reporting-dev",
+          "space:techops"
+        ]
+      }
+    ],
+    "run_as": [],
+    "metadata": {},
+    "transient_metadata": {
+      "enabled": true
+    }
+  }
