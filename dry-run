@@ -1,0 +1,125 @@
+/Users/oolajide/PycharmProjects/dup_dataview/venv/bin/python /Users/oolajide/PycharmProjects/dup_dataview/es_role_auto_update.py --config es_clusters_config.json --roles Test-290-Role --dry-run
+INFO - Loading configuration from: es_clusters_config.json
+INFO - Loaded configuration from: es_clusters_config.json
+INFO - Available clusters: prod, qa, dev, ccs
+INFO - ======================================================================
+INFO - Elasticsearch Role Auto-Updater (Multi-Cluster)
+INFO - ======================================================================
+INFO - 
+Remote inject patterns: partial-*, restored-*
+INFO - CCS inject patterns: partial-*, restored-*
+INFO - CCS Kibana privileges: feature_dashboard.all, feature_discover.all, feature_visualize.all
+INFO - Remote clusters: prod, qa, dev
+INFO - CCS cluster: ccs
+INFO - Update remote: YES
+INFO - Update CCS: YES
+INFO - Dry run: True
+INFO - Log file: logs/role_auto_update_20251215_123030.log
+INFO - 
+Roles specified via command line: 1
+INFO - 
+----------------------------------------------------------------------
+INFO - CONNECTING TO CLUSTERS
+INFO - ----------------------------------------------------------------------
+INFO - 
+Connecting to PROD cluster...
+INFO - Successfully connected to Elasticsearch: 8.19.4
+INFO - Retrieving roles from prod...
+INFO - Retrieved 97 roles from Elasticsearch
+INFO - Retrieved 97 roles from prod
+INFO - 
+Connecting to QA cluster...
+INFO - Successfully connected to Elasticsearch: 8.19.4
+INFO - Retrieving roles from qa...
+INFO - Retrieved 90 roles from Elasticsearch
+INFO - Retrieved 90 roles from qa
+INFO - 
+Connecting to DEV cluster...
+INFO - Successfully connected to Elasticsearch: 8.19.4
+INFO - Retrieving roles from dev...
+INFO - Retrieved 105 roles from Elasticsearch
+INFO - Retrieved 105 roles from dev
+INFO - 
+Connecting to CCS (CCS) cluster...
+INFO - Successfully connected to Elasticsearch: 8.19.4
+INFO - Retrieving roles from ccs...
+INFO - Retrieved 82 roles from Elasticsearch
+INFO - Retrieved 82 roles from ccs
+INFO - 
+Valid roles to process: 1
+INFO - 
+----------------------------------------------------------------------
+INFO - CREATING BACKUPS
+INFO - ----------------------------------------------------------------------
+INFO - Backed up 1 roles to backups/prod/roles_backup_20251215_123036.json
+INFO - PROD backup: backups/prod/roles_backup_20251215_123036.json
+INFO - Backed up 1 roles to backups/qa/roles_backup_20251215_123036.json
+INFO - QA backup: backups/qa/roles_backup_20251215_123036.json
+INFO - Backed up 1 roles to backups/dev/roles_backup_20251215_123036.json
+INFO - DEV backup: backups/dev/roles_backup_20251215_123036.json
+INFO - Backed up 1 roles to backups/ccs/roles_backup_20251215_123036.json
+INFO - CCS backup: backups/ccs/roles_backup_20251215_123036.json
+INFO - 
+----------------------------------------------------------------------
+INFO - ANALYZING ROLES
+INFO - ----------------------------------------------------------------------
+INFO - 
+Analyzing: Test-290-Role
+INFO -   [PROD] Already has all required patterns
+INFO -   [QA] Already has all required patterns
+INFO -   [DEV] Already has all required patterns
+INFO -   [CCS] Needs 13 patterns:
+INFO -     From injection: partial-*, restored-*
+INFO -     From prod sync: apm-*, aws-hedgeserv-log-lz-us-east-2-s3-cloudtrail-logs-*, aws-hedgeserv-log-lz-us-east-2-s3-cloudwatch-logs-*, filebeat-*, heartbeat-*, logs-apm*, metricbeat-*, metrics-apm*, partial-restored-*, sonic-*, traces-apm*
+INFO -   [CCS] Needs Kibana privileges for 6 spaces:
+INFO -     Spaces: space:caviar, space:checklist, space:hs-dev-reconconsole2, space:information-technology, space:reporting-dev, space:techops
+INFO -     Missing: feature_dashboard.all, feature_discover.all, feature_visualize.all
+INFO - 
+Roles needing updates:
+INFO -   PROD: 0
+INFO -   QA: 0
+INFO -   DEV: 0
+INFO -   CCS (CCS patterns): 1
+INFO -   CCS (CCS Kibana): 1
+INFO - Report saved to: logs/role_update_report_20251215_123030.json
+INFO - 
+======================================================================
+INFO - UPDATING ROLES
+INFO - ======================================================================
+INFO - 
+--- Updating CCS (CCS) Cluster ---
+INFO - 
+[1/1] Test-290-Role
+INFO -   Adding patterns: apm-*, aws-hedgeserv-log-lz-us-east-2-s3-cloudtrail-logs-*, aws-hedgeserv-log-lz-us-east-2-s3-cloudwatch-logs-*, filebeat-*, heartbeat-*, logs-apm*, metricbeat-*, metrics-apm*, partial-*, partial-restored-*, restored-*, sonic-*, traces-apm*
+INFO -   Adding Kibana privileges for spaces: space:caviar, space:checklist, space:hs-dev-reconconsole2, space:information-technology, space:reporting-dev, space:techops
+INFO -   [CCS] [DRY RUN] Would add 13 patterns, Kibana privileges for 6 spaces
+INFO - 
+======================================================================
+INFO - SUMMARY
+INFO - ======================================================================
+INFO - Mode: DRY RUN (no changes made)
+INFO - 
+Remote cluster inject patterns: partial-*, restored-*
+INFO - CCS cluster inject patterns: partial-*, restored-*
+INFO - CCS Kibana privileges: feature_dashboard.all, feature_discover.all, feature_visualize.all
+INFO - Remote clusters: prod, qa, dev
+INFO - CCS cluster: ccs
+INFO - 
+--- PROD CLUSTER (Remote) ---
+INFO -   Roles to update: 0
+INFO - 
+--- QA CLUSTER (Remote) ---
+INFO -   Roles to update: 0
+INFO - 
+--- DEV CLUSTER (Remote) ---
+INFO -   Roles to update: 0
+INFO - 
+--- CCS CLUSTER (CCS) ---
+INFO -   Roles to update (patterns): 1
+INFO -   Roles to update (Kibana): 1
+INFO -     Test-290-Role: +13 patterns [INJ:2, PROD:11], +Kibana (6 spaces)
+INFO -       Patterns: apm-*, aws-hedgeserv-log-lz-us-east-2-s3-cloudtrail-logs-*, aws-hedgeserv-log-lz-us-east-2-s3-cloudwatch-logs-*, filebeat-*, heartbeat-*, logs-apm*, metricbeat-*, metrics-apm*, partial-*, partial-restored-*, restored-*, sonic-*, traces-apm*
+INFO -       Kibana spaces: space:caviar, space:checklist, space:hs-dev-reconconsole2, space:information-technology, space:reporting-dev, space:techops
+INFO - ======================================================================
+
+Process finished with exit code 0
