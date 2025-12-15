@@ -20,6 +20,7 @@
     },
     "ccs": {
       "url": "https://ccs-elasticsearch:9200",
+      "kibana_url": "https://ccs-kibana:5601",
       "api_key": "YOUR_CCS_API_KEY_HERE",
       "verify_ssl": false,
       "description": "Cross-Cluster Search Elasticsearch cluster"
